@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Anda",
+  "productName": "Anda-AI",
   "version": "0.1.0",
-  "identifier": "anda.bot",
+  "identifier": "anda.ai",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -19,6 +19,23 @@
     ],
     "security": {
       "csp": null
+    }
+  },
+  "plugins": {
+    "deep-link": {
+      "mobile": [
+        {
+          "host": "app.anda.ai",
+          "pathPrefix": [
+            "/open"
+          ]
+        }
+      ],
+      "desktop": {
+        "schemes": [
+          "anda"
+        ]
+      }
     }
   },
   "bundle": {
