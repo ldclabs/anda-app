@@ -8,6 +8,7 @@
   "permissions": [
     "core:default",
     "core:event:default",
+    "os:default",
     "log:default",
     "opener:default",
     "deep-link:default",

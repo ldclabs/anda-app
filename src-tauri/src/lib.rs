@@ -1,10 +1,29 @@
-use tauri::{
-    AppHandle, Emitter, Manager, PhysicalPosition, Runtime, WebviewWindow, Window, WindowEvent,
-    path::BaseDirectory,
-};
+use tauri::{Manager, WindowEvent};
 use tauri_plugin_deep_link::DeepLinkExt;
 
 mod api;
+mod deeplink;
+mod model;
+mod service;
+mod tray;
+mod utils;
+
+use deeplink::{DeepLinkService, DeepLinkServiceExt};
+use model::app::{AppState, SecretState};
+use service::{
+    icp::{ICPClient, ICPClientExt},
+    stablecell::{CipherCell, PlainCell},
+};
+use utils::rand_bytes;
+
+const APP_SALT: &[u8] = b"Anda.AI";
+
+pub type BoxError = Box<dyn std::error::Error>;
+pub type Result<T> = core::result::Result<T, BoxError>;
+pub type AppStateCell = PlainCell<AppState>;
+pub type SecretStateCell = CipherCell<SecretState>;
+
+rust_i18n::i18n!("locales");
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -31,13 +50,22 @@ pub fn run() {
     }
 
     let app = app_builder
+        .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::AppleScript,
             None,
         ))
         .plugin(tauri_plugin_deep_link::init())
-        .invoke_handler(tauri::generate_handler![api::greet])
+        .plugin(ICPClient::init())
+        .plugin(DeepLinkService::init())
+        .plugin(AppStateCell::init("app_state.cbor".into()))
+        .invoke_handler(tauri::generate_handler![
+            api::greet,
+            api::auth::identity,
+            api::auth::sign_in,
+            api::auth::logout,
+        ])
         .setup(|app| {
             #[cfg(desktop)]
             {
@@ -46,10 +74,59 @@ pub fn run() {
                     app.deep_link().register("anda")?;
                     app.deep_link().register_all()?;
                 }
+
+                tray::create_tray(app.handle())?;
             }
 
-            app.deep_link().on_open_url(|event| {
-                log::info!(urls:serde = event.urls(); "deep link URLs");
+            let app_state = app.state::<AppStateCell>();
+            let aes_secret = app_state.with_mut(|state| {
+                state.os_arch = tauri_plugin_os::arch().to_string();
+                state.os_platform = tauri_plugin_os::platform().to_string();
+
+                if state.seed.as_slice() == &[0u8; 32] {
+                    state.seed = rand_bytes::<32>().into();
+                }
+
+                if state.settings.locale.is_empty() {
+                    let locale = match tauri_plugin_os::locale() {
+                        Some(locale) => match locale.as_str() {
+                            lo if lo.starts_with("zh") => "zh".to_string(),
+                            _ => "en".to_string(),
+                        },
+                        None => "en".to_string(),
+                    };
+                    state.settings.locale = locale;
+                }
+
+                rust_i18n::set_locale(&state.settings.locale);
+
+                if let Some(theme) = state.settings.theme {
+                    app.set_theme(Some(theme));
+                }
+
+                state.derive_a256gcm_key(APP_SALT)
+            });
+            app_state.save()?;
+
+            app.handle().plugin(SecretStateCell::init(
+                "secret_state.cbor".into(),
+                aes_secret,
+            ))?;
+
+            let secret_state = app.state::<SecretStateCell>();
+            secret_state.with_mut(|state| {
+                if let Some(auth) = &state.auth {
+                    let id = auth.to_identity(*state.session_secret)?;
+                    app.icp().set_identity(Box::new(id));
+                }
+
+                Ok::<(), String>(())
+            })?;
+            secret_state.save()?;
+
+            let dls = app.deep_link_service_owned();
+            app.deep_link().on_open_url(move |event| {
+                dls.on_open_url(event.urls());
             });
 
             Ok(())

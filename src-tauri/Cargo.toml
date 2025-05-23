@@ -20,13 +20,34 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+aes-gcm = "0.10"
+ciborium = "0.2"
+candid = "0.10"
 log = { version = "0.4", features = ["kv", "kv_serde"] }
-tauri = { version = "2", features = [] }
+object_store = { version = "0.12" }
+ic-cdk = "0.18"
+ic-agent = "0.40"
+ic_auth_types = "0.4"
+ic_cose_types = "0.8"
+ic_cose = "0.8"
+ic_tee_agent = "0.5"
+rand = "0.9"
+tokio = { version = "1" }
+tauri = { version = "2", features = [
+  "tray-icon",
+  "image-ico",
+  "image-png",
+  "unstable",
+] }
 tauri-plugin-opener = "2"
 tauri-plugin-deep-link = "2"
 tauri-plugin-log = "2"
+tauri-plugin-os = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+serde_bytes = "0.11"
+parking_lot = "0.12"
+rust-i18n = "3"
 
 [target."cfg(any(target_os = \"macos\", windows, target_os = \"linux\"))".dependencies]
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
@@ -44,3 +65,11 @@ lto = true        # Enables link-time-optimizations.
 opt-level = "s"   # Prioritizes small binary size. Use `3` if you prefer speed.
 panic = "abort"   # Higher performance by disabling panic handlers.
 strip = true      # Ensures debug symbols are removed.
+
+[package.metadata.i18n]
+available-locales = ["en", "zh"]
+default-locale = "en"
+load-path = "locales"
+
+[patch.crates-io]
+ic-cdk = { git = "https://github.com/dfinity/cdk-rs", rev = "65e9c4a966914fd028fe10ff3001fd48971596c4" }
