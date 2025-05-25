@@ -3,6 +3,7 @@ use tauri_plugin_deep_link::DeepLinkExt;
 
 mod api;
 mod deeplink;
+mod logging;
 mod model;
 mod service;
 mod tray;
@@ -29,27 +30,37 @@ rust_i18n::i18n!("locales");
 pub fn run() {
     let ctx = tauri::generate_context!();
 
-    let mut app_builder = tauri::Builder::default().plugin(
-        tauri_plugin_log::Builder::new()
-            .level(log::LevelFilter::Info)
-            .target(tauri_plugin_log::Target::new(
-                tauri_plugin_log::TargetKind::Stdout,
-            ))
-            .build(),
-    );
+    let mut app_builder = tauri::Builder::default();
 
     #[cfg(desktop)]
     {
-        app_builder = app_builder.plugin(tauri_plugin_single_instance::init(|_app, argv, cwd| {
+        app_builder = app_builder.plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             log::info!(
                 cwd = cwd,
                 argv:serde = argv;
-                "a new app instance was opened and the deep link event was already triggered");
+                "a new app instance was opened and the deep link event was already triggered, {argv:?}, cwd: {cwd:?}");
             // when defining deep link schemes at runtime, you must also check `argv` here
+
+            if let Some(window) = app.get_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
         }));
     }
 
     let app = app_builder
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .level(log::LevelFilter::Info)
+                .format(logging::formatter)
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::LogDir {
+                        file_name: Some("logs".to_string()),
+                    },
+                ))
+                .max_file_size(1024 * 1024 * 10)
+                .build(),
+        )
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(
@@ -61,8 +72,8 @@ pub fn run() {
         .plugin(DeepLinkService::init())
         .plugin(AppStateCell::init("app_state.cbor".into()))
         .invoke_handler(tauri::generate_handler![
-            api::greet,
             api::auth::identity,
+            api::auth::get_user,
             api::auth::sign_in,
             api::auth::logout,
         ])

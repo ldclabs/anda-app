@@ -9,7 +9,6 @@ use tauri::{
     AppHandle, Manager, Runtime, Url,
     plugin::{Builder, TauriPlugin},
 };
-use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_opener::OpenerExt;
 
 use crate::{
@@ -20,8 +19,8 @@ use crate::{
 #[derive(Debug)]
 pub struct DeepLinkRequest<'a, T: Serialize> {
     pub os: &'a str,        // "linux" | "windows" | "macos" | "ios" | "android"
-    pub origin: &'a str,    // "Anda.AI"
     pub action: &'a str,    // "signin"
+    pub next_url: &'a str,  // "https://anda.ai/deeplink"
     pub payload: Option<T>, // encode as base64url
 }
 
@@ -29,13 +28,13 @@ impl<T> DeepLinkRequest<'_, T>
 where
     T: Serialize,
 {
-    pub fn to_url(&self, endpoint: &Url, next_url: &Url) -> Url {
+    pub fn to_url(&self, endpoint: &Url) -> Url {
         let mut url = endpoint.clone();
         url.query_pairs_mut()
             .append_pair("os", self.os)
-            .append_pair("origin", self.origin)
             .append_pair("action", self.action)
-            .append_pair("next_url", next_url.as_str());
+            .append_pair("next_url", self.next_url);
+
         if let Some(payload) = &self.payload {
             let data: ByteBufB64 = to_cbor_bytes(payload).into();
             url.set_fragment(Some(data.to_string().as_str()));
@@ -48,8 +47,8 @@ where
 #[derive(Debug, Serialize)]
 pub struct DeepLinkResponse {
     pub url: Url,
+    pub os: String,
     pub action: String,              // "SignIn"
-    pub origin: Option<String>,      // "https://dmsg.net"
     pub payload: Option<ByteBufB64>, // decode from base64url
 }
 
@@ -62,13 +61,14 @@ impl DeepLinkResponse {
         };
 
         Ok(DeepLinkResponse {
+            os: query_pairs
+                .find(|(k, _)| k == "os")
+                .map(|(_, v)| v.to_string())
+                .unwrap_or_default(),
             action: query_pairs
                 .find(|(k, _)| k == "action")
                 .map(|(_, v)| v.to_string())
                 .unwrap_or_default(),
-            origin: query_pairs
-                .find(|(k, _)| k == "origin")
-                .map(|(_, v)| v.to_string()),
             payload,
             url,
         })
@@ -169,15 +169,14 @@ impl<R: Runtime> DeepLinkService<R> {
         // secret_state.save()?;
         let request = DeepLinkRequest::<SignInRequest> {
             os: os.as_str(),
-            origin: "Anda.AI",
+            next_url: "https://anda.ai/deeplink",
             action: "SignIn",
             payload: Some(SignInRequest {
                 session_pubkey,
                 max_time_to_live: MAX_TIME_TO_LIVE,
             }),
         };
-        let listen_url = get_current_deeplink_url(&self.app);
-        let url = request.to_url(&self.sign_in_endpoint, &listen_url);
+        let url = request.to_url(&self.sign_in_endpoint);
         self.app.opener().open_url(url.to_string(), None::<&str>)?;
         Ok(())
     }
@@ -254,17 +253,5 @@ impl<R: Runtime, T: Manager<R>> DeepLinkServiceExt<R> for T {
             app: dls.app.clone(),
             sign_in_endpoint: dls.sign_in_endpoint.clone(),
         }
-    }
-}
-
-fn get_current_deeplink_url<R: Runtime>(app: &AppHandle<R>) -> Url {
-    println!(
-        "app.deep_link().get_current() = {:?}",
-        app.deep_link().get_current()
-    );
-    let default_url = Url::parse("anda://deeplink").unwrap();
-    match app.deep_link().get_current() {
-        Ok(Some(urls)) if urls.len() > 0 => urls[0].clone(),
-        _ => default_url,
     }
 }

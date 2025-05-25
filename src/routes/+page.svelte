@@ -1,19 +1,15 @@
 <script lang="ts">
-  import { authStore, logout, signIn } from '$lib/stores/auth.svelte'
+  import { authStore, get_user, logout, signIn } from '$lib/stores/auth.svelte'
   import { Button } from 'flowbite-svelte'
 
   async function onSignIn(event: Event) {
     event.preventDefault()
-    console.log('sign in', event)
     await signIn()
-    console.log('sign in after', authStore.auth)
   }
 
   async function onLogout(event: Event) {
     event.preventDefault()
-    console.log('logout', event)
     await logout()
-    console.log('logout after', authStore.auth)
   }
 </script>
 
@@ -23,6 +19,16 @@
   <h1>Welcome to Anda</h1>
 
   <p>{authStore.auth.id}</p>
+
+  {#key authStore.auth.id}
+    {#if authStore.auth.isAuthenticated()}
+      {#await get_user()}
+        <p>waiting for the promise to resolve...</p>
+      {:then userInfo}
+        <p>{JSON.stringify(userInfo)}</p>
+      {/await}
+    {/if}
+  {/key}
 
   {#if authStore.auth.isAuthenticated()}
     <Button

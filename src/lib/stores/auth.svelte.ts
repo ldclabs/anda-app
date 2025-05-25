@@ -8,6 +8,15 @@ export interface IdentityInfo {
   expiration: number | null // in milliseconds
 }
 
+export interface UserInfo {
+  id: string
+  name: string
+  image: string
+  profile_canister: string
+  cose_canister: string | null
+  username: string | null
+}
+
 export class AuthInfo {
   static AnonymousId = '2vxsx-fae'
 
@@ -43,6 +52,12 @@ export async function signIn() {
 
 export async function logout() {
   await invoke('logout')
+}
+
+export async function get_user() {
+  let user: UserInfo = await invoke('get_user')
+  console.log('get_user', user)
+  return user
 }
 
 async function init() {

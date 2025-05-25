@@ -36,7 +36,7 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
 
     let _ = TrayIconBuilder::with_id("tray-1")
         .tooltip("Anda AI")
-        .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/tray_icon.png")).unwrap())
+        .icon(app.default_window_icon().unwrap().clone())
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_tray_icon_event(|_tray, _event| {})

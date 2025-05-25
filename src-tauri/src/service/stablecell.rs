@@ -33,7 +33,11 @@ where
     {
         Builder::new(Self::NAME)
             .setup(move |app, _api| {
-                let path = app.path().app_local_data_dir().unwrap().join(file);
+                let app_data_dir = app
+                    .path()
+                    .app_local_data_dir()
+                    .map_err(|e| format!("Failed to get app local data dir: {}", e))?;
+                let path = app_data_dir.join(file);
                 let cell = PlainCell::<T>::load(path)?;
                 app.manage(cell);
                 Ok(())
@@ -106,7 +110,11 @@ where
     }
 
     pub fn save(&self) -> Result<()> {
-        fs::create_dir_all(self.path.parent().expect("invalid cell path"))?;
+        if let Some(parent) = self.path.parent() {
+            fs::create_dir_all(parent)?;
+        } else {
+            return Err("Invalid cell path: no parent directory".into());
+        }
 
         let mut data = Vec::new();
         into_writer(&*self.value.read(), &mut data)?;
@@ -136,7 +144,11 @@ where
     {
         Builder::new(Self::NAME)
             .setup(move |app, _api| {
-                let path = app.path().app_local_data_dir().unwrap().join(file);
+                let app_data_dir = app
+                    .path()
+                    .app_local_data_dir()
+                    .map_err(|e| format!("Failed to get app local data dir: {}", e))?;
+                let path = app_data_dir.join(file);
                 let cell = CipherCell::<T>::load(path, secret)?;
                 app.manage(cell);
                 Ok(())
@@ -229,7 +241,11 @@ where
     }
 
     pub fn save(&self) -> Result<()> {
-        fs::create_dir_all(self.path.parent().expect("invalid cell path"))?;
+        if let Some(parent) = self.path.parent() {
+            fs::create_dir_all(parent)?;
+        } else {
+            return Err("Invalid cell path: no parent directory".into());
+        }
 
         let mut data = Vec::new();
         into_writer(&*self.value.read(), &mut data)?;

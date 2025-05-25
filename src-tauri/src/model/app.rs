@@ -53,8 +53,8 @@ impl SecretState {
 pub struct InternetIdentityAuth {
     pub user_pubkey: ByteBufB64,
     pub delegations: Vec<SignedDelegation>,
-    pub authn_method: String, // "pin" | "passkey" | "recovery"
-    pub origin: String,
+    pub authn_method: String, // "pin" | "passkey" | "recovery" | "dMsg"
+    pub origin: String,       // "https://dmsg.net" | "https://panda.fans"
 }
 
 impl InternetIdentityAuth {
@@ -64,7 +64,7 @@ impl InternetIdentityAuth {
 
     pub fn to_identity(&self, session_secret: [u8; 32]) -> Result<DelegatedIdentity, String> {
         let session = basic_identity(session_secret);
-        let id = DelegatedIdentity::new(
+        let id = DelegatedIdentity::new_unchecked(
             self.user_pubkey.to_vec(),
             Box::new(session),
             self.delegations
@@ -72,8 +72,7 @@ impl InternetIdentityAuth {
                 .into_iter()
                 .map(signed_delegation_from)
                 .collect(),
-        )
-        .map_err(|err| format!("{:?}", err))?;
+        );
 
         Ok(id)
     }

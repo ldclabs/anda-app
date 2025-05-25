@@ -1,5 +1,9 @@
-use candid::Principal;
+use candid::{
+    CandidType, Decode, Principal,
+    utils::{ArgumentEncoder, encode_args},
+};
 use ic_agent::{Agent, Identity};
+use ic_cose_types::{BoxError, CanisterCaller};
 use ic_tee_agent::{AtomicIdentity, get_expiration};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -54,10 +58,11 @@ impl<R: Runtime> ICPClient<R> {
                     agent.build()?
                 };
 
+                let _agent = agent.clone();
                 if ICP_HOST.starts_with("http://") {
-                    async_runtime::block_on(async {
+                    async_runtime::spawn(async move {
                         // ignore the error
-                        let _ = agent.fetch_root_key().await;
+                        let _ = _agent.fetch_root_key().await;
                     });
                 }
                 app.manage(ICPClient {
@@ -79,9 +84,47 @@ impl<R: Runtime> ICPClient<R> {
         self.identity.set(identity);
         let _ = self.app.emit(IDENTITY_EVENT, payload);
     }
+}
 
-    pub fn agent(&self) -> &Agent {
-        &self.agent
+impl<R: Runtime> CanisterCaller for ICPClient<R> {
+    async fn canister_query<
+        In: ArgumentEncoder + Send,
+        Out: CandidType + for<'a> candid::Deserialize<'a>,
+    >(
+        &self,
+        canister: &Principal,
+        method: &str,
+        args: In,
+    ) -> Result<Out, BoxError> {
+        let input = encode_args(args)?;
+        let res = self
+            .agent
+            .query(canister, method)
+            .with_arg(input)
+            .call()
+            .await?;
+        let output = Decode!(res.as_slice(), Out)?;
+        Ok(output)
+    }
+
+    async fn canister_update<
+        In: ArgumentEncoder + Send,
+        Out: CandidType + for<'a> candid::Deserialize<'a>,
+    >(
+        &self,
+        canister: &Principal,
+        method: &str,
+        args: In,
+    ) -> Result<Out, BoxError> {
+        let input = encode_args(args)?;
+        let res = self
+            .agent
+            .update(canister, method)
+            .with_arg(input)
+            .call_and_wait()
+            .await?;
+        let output = Decode!(res.as_slice(), Out)?;
+        Ok(output)
     }
 }
 

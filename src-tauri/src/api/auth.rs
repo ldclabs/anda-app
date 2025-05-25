@@ -1,17 +1,34 @@
 use candid::Principal;
 use ic_agent::Identity;
+use ic_cose_types::CanisterCaller;
 use ic_tee_agent::AnonymousIdentity;
 use tauri::{AppHandle, Manager};
 
 use super::Result;
 use crate::SecretStateCell;
 use crate::deeplink::DeepLinkServiceExt;
+use crate::model::user::UserInfo;
 use crate::service::icp::{ICPClientExt, IdentityInfo};
 
 #[tauri::command]
 pub async fn identity(app: AppHandle) -> Result<IdentityInfo> {
     let id = app.icp().identity();
     Ok(IdentityInfo::from(id.as_ref()))
+}
+
+// dMsg canister: "nscli-qiaaa-aaaaj-qa4pa-cai"
+static IC_MESSAGE: Principal = Principal::from_slice(&[0, 0, 0, 0, 1, 48, 7, 30, 1, 1]);
+
+#[tauri::command]
+pub async fn get_user(app: AppHandle) -> Result<UserInfo> {
+    let id = app.icp().identity();
+    let user: std::result::Result<UserInfo, String> = app
+        .icp()
+        .canister_query(&IC_MESSAGE, "get_user", (&Some(id.sender().unwrap()),))
+        .await
+        .map_err(|err| err.to_string())?;
+    let user = user?;
+    Ok(user)
 }
 
 #[tauri::command]
