@@ -48,9 +48,3 @@ impl Serialize for Error {
         serializer.serialize_str(self.to_string().as_ref())
     }
 }
-
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-pub fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted with Anda!", name)
-}

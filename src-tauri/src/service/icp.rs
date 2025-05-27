@@ -12,10 +12,10 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
 };
 
-#[cfg(debug_assertions)]
-pub const ICP_HOST: &str = "http://127.0.0.1:4943";
+// #[cfg(debug_assertions)]
+// pub const ICP_HOST: &str = "http://127.0.0.1:4943";
 
-#[cfg(not(debug_assertions))]
+// #[cfg(not(debug_assertions))]
 pub const ICP_HOST: &str = "https://icp-api.io";
 
 pub const IDENTITY_EVENT: &str = "IdentityChanged";
@@ -70,6 +70,7 @@ impl<R: Runtime> ICPClient<R> {
                     identity,
                     agent,
                 });
+                log::info!("Initialized {} with ICP_HOST {:?}", Self::NAME, ICP_HOST);
                 Ok(())
             })
             .build()

@@ -15,7 +15,7 @@ use service::{
     icp::{ICPClient, ICPClientExt},
     stablecell::{CipherCell, PlainCell},
 };
-use utils::rand_bytes;
+use utils::{SensitiveData, rand_bytes};
 
 const APP_SALT: &[u8] = b"Anda.AI";
 
@@ -94,8 +94,8 @@ pub fn run() {
                 state.os_arch = tauri_plugin_os::arch().to_string();
                 state.os_platform = tauri_plugin_os::platform().to_string();
 
-                if state.seed.as_slice() == &[0u8; 32] {
-                    state.seed = rand_bytes::<32>().into();
+                if state.seed.as_slice() == [0u8; 32] {
+                    state.seed = SensitiveData(rand_bytes::<32>().into());
                 }
 
                 if state.settings.locale.is_empty() {
@@ -127,8 +127,15 @@ pub fn run() {
             let secret_state = app.state::<SecretStateCell>();
             secret_state.with_mut(|state| {
                 if let Some(auth) = &state.auth {
-                    let id = auth.to_identity(*state.session_secret)?;
-                    app.icp().set_identity(Box::new(id));
+                    let principal = auth.principal();
+                    match auth.to_identity(**state.session_secret) {
+                        Ok(id) => {
+                            app.icp().set_identity(Box::new(id));
+                        }
+                        Err(err) => {
+                            log::error!("Failed to create identity from {principal}: {err:?}");
+                        }
+                    }
                 }
 
                 Ok::<(), String>(())
@@ -140,16 +147,17 @@ pub fn run() {
                 dls.on_open_url(event.urls());
             });
 
+            log::info!("Initialized application");
+
             Ok(())
         })
-        .on_window_event(|window, event| match event {
-            WindowEvent::CloseRequested { api, .. } => {
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
                 // https://tauri.app/v1/guides/features/system-tray/#preventing-the-app-from-closing
                 log::info!("Close requested event received");
                 window.hide().unwrap();
                 api.prevent_close();
             }
-            _ => {}
         })
         .build(ctx)
         .expect("error while running tauri application");
@@ -164,9 +172,7 @@ pub fn run() {
                 "Reopen event received: has_visible_windows = {}",
                 has_visible_windows
             );
-            if has_visible_windows {
-                return;
-            }
+            if has_visible_windows {}
         }
         _ => {
             let _ = app_handle;

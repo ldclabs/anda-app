@@ -38,24 +38,22 @@ where
                     .app_local_data_dir()
                     .map_err(|e| format!("Failed to get app local data dir: {}", e))?;
                 let path = app_data_dir.join(file);
-                let cell = PlainCell::<T>::load(path)?;
+                let cell = PlainCell::<T>::load(path.clone())?;
                 app.manage(cell);
+                log::info!("Initialized {} at {:?}", Self::NAME, path);
                 Ok(())
             })
             .on_event(|app, event| {
-                match event {
-                    RunEvent::Exit => {
-                        // app is going to exit, you can cleanup here
-                        let cell = app.state::<PlainCell<T>>();
+                if let RunEvent::Exit = event {
+                    // app is going to exit, you can cleanup here
+                    let cell = app.state::<PlainCell<T>>();
 
-                        if let Err(err) = cell.save() {
-                            log::error!(
-                                path = format!("{:?}", cell.path.display());
-                                "Failed to save {}: {err:?}", Self::NAME,
-                            );
-                        };
-                    }
-                    _ => {}
+                    if let Err(err) = cell.save() {
+                        log::error!(
+                            path = format!("{:?}", cell.path.display());
+                            "Failed to save {}: {err:?}", Self::NAME,
+                        );
+                    };
                 }
             })
             .build()
@@ -149,24 +147,22 @@ where
                     .app_local_data_dir()
                     .map_err(|e| format!("Failed to get app local data dir: {}", e))?;
                 let path = app_data_dir.join(file);
-                let cell = CipherCell::<T>::load(path, secret)?;
+                let cell = CipherCell::<T>::load(path.clone(), secret)?;
                 app.manage(cell);
+                log::info!("Initialized {} at {:?}", Self::NAME, path);
                 Ok(())
             })
             .on_event(|app, event| {
-                match event {
-                    RunEvent::Exit => {
-                        // app is going to exit, you can cleanup here
-                        let cell = app.state::<CipherCell<T>>();
+                if let RunEvent::Exit = event {
+                    // app is going to exit, you can cleanup here
+                    let cell = app.state::<CipherCell<T>>();
 
-                        if let Err(err) = cell.save() {
-                            log::error!(
-                                path = format!("{:?}", cell.path.display());
-                                "Failed to save {}: {err:?}", Self::NAME,
-                            );
-                        };
-                    }
-                    _ => {}
+                    if let Err(err) = cell.save() {
+                        log::error!(
+                            path = format!("{:?}", cell.path.display());
+                            "Failed to save {}: {err:?}", Self::NAME,
+                        );
+                    };
                 }
             })
             .build()

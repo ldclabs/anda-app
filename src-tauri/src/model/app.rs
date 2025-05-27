@@ -1,17 +1,20 @@
 use candid::Principal;
 use ic_agent::Identity;
-use ic_auth_types::{ByteArrayB64, ByteBufB64, SignedDelegation};
+use ic_auth_types::{ByteArrayB64, ByteBufB64, SignedDelegationCompact};
+use ic_auth_verifier::envelope::{unix_ms, verify_delegation_chain};
 use ic_cose_types::cose::kdf::{derive_a256gcm_key, hkdf256};
 use ic_tee_agent::identity::{DelegatedIdentity, basic_identity, signed_delegation_from};
 use serde::{Deserialize, Serialize};
 use tauri::Theme;
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+use crate::utils::SensitiveData;
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct AppState {
     pub os_arch: String,
     pub os_platform: String,
     pub settings: Settings,
-    pub seed: ByteArrayB64<32>,
+    pub seed: SensitiveData<ByteArrayB64<32>>,
 }
 
 impl AppState {
@@ -21,7 +24,7 @@ impl AppState {
             os_arch: self.os_arch.clone(),
             os_platform: self.os_platform.clone(),
             settings: self.settings.clone(),
-            seed: seed.into(),
+            seed: SensitiveData(seed.into()),
         }
     }
 
@@ -30,29 +33,29 @@ impl AppState {
     }
 }
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Settings {
     pub locale: String,
     pub theme: Option<Theme>, // "light" | "dark"
 }
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct SecretState {
-    pub session_secret: ByteArrayB64<32>, // ed25519 private key
+    pub session_secret: SensitiveData<ByteArrayB64<32>>, // ed25519 private key
     pub auth: Option<InternetIdentityAuth>,
 }
 
 impl SecretState {
     pub fn session_pubkey(&self) -> ByteBufB64 {
-        let session = basic_identity(*self.session_secret);
+        let session = basic_identity(**self.session_secret);
         session.public_key().unwrap().into()
     }
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct InternetIdentityAuth {
     pub user_pubkey: ByteBufB64,
-    pub delegations: Vec<SignedDelegation>,
+    pub delegations: Vec<SignedDelegationCompact>,
     pub authn_method: String, // "pin" | "passkey" | "recovery" | "dMsg"
     pub origin: String,       // "https://dmsg.net" | "https://panda.fans"
 }
@@ -64,13 +67,21 @@ impl InternetIdentityAuth {
 
     pub fn to_identity(&self, session_secret: [u8; 32]) -> Result<DelegatedIdentity, String> {
         let session = basic_identity(session_secret);
+        let session_pubkey = session.public_key().unwrap();
+        verify_delegation_chain(
+            &self.user_pubkey,
+            session_pubkey.as_slice(),
+            &self.delegations,
+            unix_ms(),
+            None,
+        )?;
         let id = DelegatedIdentity::new_unchecked(
             self.user_pubkey.to_vec(),
             Box::new(session),
             self.delegations
                 .clone()
                 .into_iter()
-                .map(signed_delegation_from)
+                .map(|d| signed_delegation_from(d.into()))
                 .collect(),
         );
 

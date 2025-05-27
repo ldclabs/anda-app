@@ -1,6 +1,6 @@
 use ciborium::from_reader;
 use ic_agent::Identity;
-use ic_auth_types::{ByteBufB64, SignedDelegation};
+use ic_auth_types::{ByteBufB64, SignedDelegationCompact};
 use ic_cose::rand_bytes;
 use ic_cose_types::to_cbor_bytes;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -13,7 +13,7 @@ use tauri_plugin_opener::OpenerExt;
 
 use crate::{
     AppStateCell, Result, SecretStateCell, model::app::InternetIdentityAuth,
-    service::icp::ICPClientExt,
+    service::icp::ICPClientExt, utils::SensitiveData,
 };
 
 #[derive(Debug)]
@@ -99,7 +99,7 @@ pub struct SignInResponse {
     #[serde(rename = "u")]
     pub user_pubkey: ByteBufB64,
     #[serde(rename = "d")]
-    pub delegations: Vec<SignedDelegation>,
+    pub delegations: Vec<SignedDelegationCompact>,
     #[serde(rename = "a")]
     pub authn_method: String,
     #[serde(rename = "o")]
@@ -149,6 +149,7 @@ impl<R: Runtime> DeepLinkService<R> {
                     app: app.clone(),
                     sign_in_endpoint,
                 });
+                log::info!("Initialized {}", Self::NAME);
                 Ok(())
             })
             .build()
@@ -160,7 +161,7 @@ impl<R: Runtime> DeepLinkService<R> {
             .state::<AppStateCell>()
             .with(|state| state.os_platform.clone());
         let session_pubkey = self.app.state::<SecretStateCell>().with_mut(|state| {
-            state.session_secret = rand_bytes().into();
+            state.session_secret = SensitiveData(rand_bytes().into());
             state.auth = None;
             state.session_pubkey()
         });
@@ -169,7 +170,7 @@ impl<R: Runtime> DeepLinkService<R> {
         // secret_state.save()?;
         let request = DeepLinkRequest::<SignInRequest> {
             os: os.as_str(),
-            next_url: "https://anda.ai/deeplink",
+            next_url: "https://anda.ai/deeplink/",
             action: "SignIn",
             payload: Some(SignInRequest {
                 session_pubkey,
@@ -219,7 +220,7 @@ impl<R: Runtime> DeepLinkService<R> {
         let auth = InternetIdentityAuth::from(res);
         let secret_state = self.app.state::<SecretStateCell>();
         let principal = secret_state.with_mut(|state| {
-            let id = auth.to_identity(*state.session_secret)?;
+            let id = auth.to_identity(**state.session_secret)?;
             let principal = id.sender().unwrap();
             self.app.icp().set_identity(Box::new(id));
 

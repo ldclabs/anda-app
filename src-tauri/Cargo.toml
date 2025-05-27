@@ -23,11 +23,13 @@ tauri-build = { version = "2", features = [] }
 aes-gcm = "0.10"
 ciborium = "0.2"
 candid = "0.10"
+const-hex = "1"
 log = { version = "0.4", features = ["kv", "kv_serde"] }
 object_store = { version = "0.12" }
 ic-cdk = "0.18"
 ic-agent = "0.40"
 ic_auth_types = "0.4"
+ic_auth_verifier = { version = "0.4", features = ["full"] }
 ic_cose_types = "0.8"
 ic_cose = "0.8"
 ic_tee_agent = "0.5"
