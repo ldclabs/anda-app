@@ -10,6 +10,7 @@
     "frontendDist": "../build"
   },
   "app": {
+    "enableGTKAppId": false,
     "windows": [
       {
         "label": "main",
@@ -20,11 +21,21 @@
         "hiddenTitle": false,
         "visibleOnAllWorkspaces": false,
         "alwaysOnTop": false,
-        "titleBarStyle": "Transparent"
+        "titleBarStyle": "Transparent",
+        "url": "/"
       }
     ],
     "security": {
-      "csp": null
+      "assetProtocol": {
+        "enable": false,
+        "scope": []
+      },
+      "capabilities": [],
+      "dangerousDisableAssetCspModification": false,
+      "freezePrototype": false,
+      "pattern": {
+        "use": "brownfield"
+      }
     }
   },
   "plugins": {

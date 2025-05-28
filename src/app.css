@@ -4,35 +4,48 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
-  --color-primary-50: #fff5f2;
-  --color-primary-100: #fff1ee;
-  --color-primary-200: #ffe4de;
-  --color-primary-300: #ffd5cc;
-  --color-primary-400: #ffbcad;
-  --color-primary-500: #fe795d;
-  --color-primary-600: #ef562f;
-  --color-primary-700: #eb4f27;
-  --color-primary-800: #cc4522;
-  --color-primary-900: #a5371b;
+/*
+ https://uicolors.app/generate/00f7ff
+ https://oklch.com/
+ #11c291 #00f7ff #002fa7 #f7e14d #008c8c #81d8d0
+*/
 
-  --color-secondary-50: #f0f9ff;
-  --color-secondary-100: #e0f2fe;
-  --color-secondary-200: #bae6fd;
-  --color-secondary-300: #7dd3fc;
-  --color-secondary-400: #38bdf8;
-  --color-secondary-500: #0ea5e9;
-  --color-secondary-600: #0284c7;
-  --color-secondary-700: #0369a1;
-  --color-secondary-800: #075985;
-  --color-secondary-900: #0c4a6e;
+@theme {
+  --color-primary-50: oklch(0.9796 0.02 169.36);
+  --color-primary-100: oklch(0.951 0.0493 165.58);
+  --color-primary-200: oklch(0.906 0.0866 167.06);
+  --color-primary-300: oklch(0.847 0.1249 168.54);
+  --color-primary-400: oklch(0.7751 0.1465 167.02);
+  --color-primary-500: oklch(0.7232 0.1468 166.48);
+  --color-primary-600: oklch(0.598 0.1208 167.56);
+  --color-primary-700: oklch(0.5098 0.1001 169.89);
+  --color-primary-800: oklch(0.4333 0.0824 171.54);
+  --color-primary-900: oklch(0.3793 0.0699 173.6);
+  --color-primary-950: oklch(0.2628 0.0472 176.52);
+
+  --color-secondary-50: oklch(0.9841 0.022 189.9);
+  --color-secondary-100: oklch(0.9635 0.0527 191.95);
+  --color-secondary-200: oklch(0.939 0.0921 192.33);
+  --color-secondary-300: oklch(0.9154 0.1341 193.32);
+  --color-secondary-400: oklch(0.8865 0.1507 198.98);
+  --color-secondary-500: oklch(0.8058 0.137096 201.9059);
+  --color-secondary-600: oklch(0.6842 0.1178 208.58);
+  --color-secondary-700: oklch(0.578 0.0998 210.95);
+  --color-secondary-800: oklch(0.4924 0.083 212.89);
+  --color-secondary-900: oklch(0.4324 0.0712 215.37);
+  --color-secondary-950: oklch(0.3295 0.0577 218.41);
 }
 
 @source "../node_modules/flowbite-svelte/dist";
+@source "../node_modules/flowbite-svelte-icons/dist";
 
 @layer base {
   /* disable chrome cancel button */
   input[type='search']::-webkit-search-cancel-button {
     display: none;
+  }
+
+  button {
+    cursor: pointer;
   }
 }

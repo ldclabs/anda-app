@@ -78,6 +78,17 @@ pub fn run() {
             api::auth::logout,
         ])
         .setup(|app| {
+            if tauri::is_dev() {
+                log::info!("Running in development mode: {}", app.config().identifier);
+
+                if !app.config().identifier.ends_with("dev") {
+                    panic!(
+                        "The app identifier {} does not end with 'dev', this may cause issues in development.",
+                        app.config().identifier
+                    );
+                }
+            }
+
             #[cfg(desktop)]
             {
                 #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
