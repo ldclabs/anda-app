@@ -1,7 +1,7 @@
 use candid::Principal;
 use ic_agent::Identity;
+use ic_auth_verifier::AnonymousIdentity;
 use ic_cose_types::CanisterCaller;
-use ic_tee_agent::AnonymousIdentity;
 use tauri::{AppHandle, Manager};
 
 use super::Result;

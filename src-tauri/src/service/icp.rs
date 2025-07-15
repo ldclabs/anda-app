@@ -3,8 +3,8 @@ use candid::{
     utils::{ArgumentEncoder, encode_args},
 };
 use ic_agent::{Agent, Identity};
+use ic_auth_verifier::{AtomicIdentity, get_expiration};
 use ic_cose_types::{BoxError, CanisterCaller};
-use ic_tee_agent::{AtomicIdentity, get_expiration};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tauri::{
