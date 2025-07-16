@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state'
   import { authStore, get_user, logout, signIn } from '$lib/stores/auth.svelte'
+  import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri-mock'
   import { type as osType } from '@tauri-apps/plugin-os'
   import {
     BottomNav,
@@ -18,14 +19,13 @@
     ArrowRightToBracketOutline,
     CogOutline,
     ComputerSpeakerOutline,
-    MessagesOutline,
-    SearchOutline,
     UserCircleOutline,
     UserHeadsetOutline,
     WalletOutline
   } from 'flowbite-svelte-icons'
 
-  const ot = osType()
+  // Safe OS type detection
+  const ot = isTauriEnvironment() ? osType() : safeOsType()
   const enableMobile = ot != 'ios' && ot != 'android'
 
   let { children } = $props()
@@ -70,12 +70,12 @@
         <BottomNavItem btnName="Agent" href="/agent">
           <UserHeadsetOutline size="lg" />
         </BottomNavItem>
-        <BottomNavItem btnName="Discover" href="/discover">
+        <!-- <BottomNavItem btnName="Discover" href="/discover">
           <SearchOutline size="lg" />
-        </BottomNavItem>
-        <BottomNavItem btnName="Messages" href="/messages">
+        </BottomNavItem> -->
+        <!-- <BottomNavItem btnName="Messages" href="/messages">
           <MessagesOutline size="lg" />
-        </BottomNavItem>
+        </BottomNavItem> -->
         {#if authStore.auth.isAuthenticated()}
           {#await get_user()}
             <BottomNavItem btnName="Sign In" href="#">
@@ -157,16 +157,16 @@
               <UserHeadsetOutline size="lg" />
             {/snippet}
           </SidebarItem>
-          <SidebarItem label="Discover" href="/discover">
+          <!-- <SidebarItem label="Discover" href="/discover">
             {#snippet icon()}
               <SearchOutline size="lg" />
             {/snippet}
-          </SidebarItem>
-          <SidebarItem label="Messages" href="/messages">
+          </SidebarItem> -->
+          <!-- <SidebarItem label="Messages" href="/messages">
             {#snippet icon()}
               <MessagesOutline size="lg" />
             {/snippet}
-          </SidebarItem>
+          </SidebarItem> -->
         </SidebarGroup>
         <SidebarGroup border>
           {#if authStore.auth.isAuthenticated()}

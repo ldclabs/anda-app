@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@import 'katex/dist/katex.min.css';
+@import 'prismjs/themes/prism-okaidia.min.css';
 
 @plugin 'flowbite/plugin';
 

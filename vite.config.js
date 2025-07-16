@@ -14,6 +14,16 @@ export default defineConfig(async () => ({
   //
   // 1. prevent Vite from obscuring rust errors
   clearScreen: false,
+
+  // Define global variables for browser development
+  define: {
+    __TAURI_OS_PLUGIN_INTERNALS__: JSON.stringify({
+      type: () => 'web'
+    }),
+    __TAURI_METADATA__: JSON.stringify({
+      target: 'web'
+    })
+  },
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
     port: 1420,
