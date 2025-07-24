@@ -11,8 +11,8 @@
 
   let { message }: { message: ChatMessage } = $props()
   const [content, hook] = renderMarkdown(message.content)
-  let text = $state(getPlainText(message.content))
 
+  let text = $state('')
   let textSuccess = $state(false)
   let mdSuccess = $state(false)
 
@@ -37,17 +37,18 @@
   <div
     class="flex flex-col gap-1 {message.role === 'user'
       ? 'max-w-[90%] items-end'
-      : 'w-full items-start'}"
+      : 'w-full'}"
   >
     <div
-      class="pointer-events-none sticky top-0 z-10 -mt-12 flex flex-row gap-2 rounded-lg bg-white/80 p-2 opacity-0 shadow-xs backdrop-blur-xs transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 {message.role ===
+      class="pointer-events-none sticky top-0 z-10 -mt-12 -mr-2 flex flex-row gap-2 rounded-lg bg-white/80 p-2 opacity-0 backdrop-blur-xs transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 {message.role ===
       'user'
-        ? '-mr-2'
-        : '-ml-2'}"
+        ? ''
+        : 'self-end'}"
     >
       <Clipboard
         bind:value={text}
         bind:success={textSuccess}
+        onclick={() => (text = getPlainText(message.content))}
         size="sm"
         color="alternative"
         class="focus-within:ring-0 focus:ring-0"

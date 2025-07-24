@@ -10,7 +10,7 @@ import './prismjs'
 // 初始化 Mermaid
 mermaid.initialize({
   startOnLoad: false,
-  theme: 'default',
+  theme: 'neutral',
   securityLevel: 'loose',
   fontFamily: 'monospace'
 })
@@ -43,87 +43,137 @@ md.renderer.rules.link_open = function (tokens, idx, options, env, renderer) {
 
 // KaTeX 插件 - 处理数学公式
 function katexPlugin(md: MarkdownIt) {
-  // 行内数学公式 $...$
+  // 定义支持的分隔符
+  const delimiters = [
+    { left: '$$', right: '$$', display: true },
+    { left: '$', right: '$', display: false },
+    { left: '\\(', right: '\\)', display: false },
+    { left: '\\[', right: '\\]', display: true }
+  ]
+
+  // 行内数学公式解析器
   md.inline.ruler.before('escape', 'math_inline', function (state, silent) {
     const start = state.pos
-    if (state.src[start] !== '$') return false
+    const src = state.src
 
-    let pos = start + 1
-    while (pos < state.posMax && state.src[pos] !== '$') {
-      if (state.src[pos] === '\\') pos++ // 跳过转义字符
-      pos++
+    // 检查所有行内分隔符
+    for (const delimiter of delimiters) {
+      if (delimiter.display) continue // 跳过块级分隔符
+
+      const leftDelim = delimiter.left
+      const rightDelim = delimiter.right
+
+      // 检查是否匹配左分隔符
+      if (!src.slice(start).startsWith(leftDelim)) continue
+
+      let pos = start + leftDelim.length
+      let found = false
+
+      // 查找右分隔符
+      while (pos < state.posMax) {
+        if (src.slice(pos).startsWith(rightDelim)) {
+          found = true
+          break
+        }
+        if (src[pos] === '\\') pos++ // 跳过转义字符
+        pos++
+      }
+
+      if (!found) continue
+
+      const content = src.slice(start + leftDelim.length, pos)
+      if (!content.trim()) continue
+
+      if (!silent) {
+        const token = state.push('math_inline', 'math', 0)
+        token.content = content
+        token.markup = leftDelim
+      }
+
+      state.pos = pos + rightDelim.length
+      return true
     }
 
-    if (pos >= state.posMax || state.src[pos] !== '$') return false
-
-    const content = state.src.slice(start + 1, pos)
-    if (!content.trim()) return false
-
-    if (!silent) {
-      const token = state.push('math_inline', 'math', 0)
-      token.content = content
-      token.markup = '$'
-    }
-
-    state.pos = pos + 1
-    return true
+    return false
   })
 
-  // 块级数学公式 $$...$$
+  // 块级数学公式解析器
   md.block.ruler.before(
     'fence',
     'math_block',
     function (state, start, end, silent) {
-      const marker = '$$'
       let pos = state.bMarks[start] + state.tShift[start]
       let max = state.eMarks[start]
+      const src = state.src
 
-      if (pos + marker.length > max) return false
-      if (state.src.slice(pos, pos + marker.length) !== marker) return false
+      // 检查所有块级分隔符
+      for (const delimiter of delimiters) {
+        if (!delimiter.display) continue // 跳过行内分隔符
 
-      pos += marker.length
-      let firstLine = state.src.slice(pos, max).trim()
+        const leftDelim = delimiter.left
+        const rightDelim = delimiter.right
 
-      if (firstLine.endsWith(marker)) {
-        firstLine = firstLine.slice(0, -marker.length).trim()
-        let nextLine = start
-        let content = firstLine
+        // 检查是否匹配左分隔符
+        if (!src.slice(pos).startsWith(leftDelim)) continue
 
-        if (!silent) {
-          const token = state.push('math_block', 'math', 0)
-          token.content = content
-          token.markup = marker
-          token.map = [start, nextLine + 1]
-        }
+        pos += leftDelim.length
+        let firstLine = src.slice(pos, max).trim()
 
-        state.line = nextLine + 1
-        return true
-      }
+        // 处理单行情况（如 $$formula$$）
+        if (firstLine.endsWith(rightDelim)) {
+          const content = firstLine.slice(0, -rightDelim.length).trim()
 
-      let nextLine = start + 1
-      let content = firstLine
-
-      while (nextLine < end) {
-        pos = state.bMarks[nextLine] + state.tShift[nextLine]
-        max = state.eMarks[nextLine]
-
-        if (pos < max && state.tShift[nextLine] < state.blkIndent) break
-
-        const line = state.src.slice(pos, max).trim()
-        if (line === marker) {
           if (!silent) {
             const token = state.push('math_block', 'math', 0)
             token.content = content
-            token.markup = marker
+            token.markup = leftDelim
+            token.map = [start, start + 1]
+          }
+
+          state.line = start + 1
+          return true
+        }
+
+        // 处理多行情况
+        let nextLine = start + 1
+        let content = firstLine
+        let found = false
+
+        while (nextLine < end) {
+          pos = state.bMarks[nextLine] + state.tShift[nextLine]
+          max = state.eMarks[nextLine]
+
+          if (pos < max && state.tShift[nextLine] < state.blkIndent) break
+
+          const line = src.slice(pos, max)
+
+          // 检查是否包含右分隔符
+          const rightIndex = line.indexOf(rightDelim)
+          if (rightIndex !== -1) {
+            // 找到右分隔符
+            const beforeRight = line.slice(0, rightIndex).trim()
+            if (beforeRight) {
+              content += '\n' + beforeRight
+            }
+            found = true
+            break
+          }
+
+          content += '\n' + line.trim()
+          nextLine++
+        }
+
+        if (found) {
+          if (!silent) {
+            const token = state.push('math_block', 'math', 0)
+            token.content = content
+            token.markup = leftDelim
             token.map = [start, nextLine + 1]
           }
 
           state.line = nextLine + 1
           return true
         }
-
-        content += '\n' + line
-        nextLine++
       }
 
       return false
@@ -143,9 +193,9 @@ function katexPlugin(md: MarkdownIt) {
   md.renderer.rules.math_block = function (tokens, idx) {
     const token = tokens[idx]
     try {
-      return `<div class="katex-display">${katex.renderToString(token.content, { displayMode: true })}</div>`
+      return `<div class="katex-display">${katex.renderToString(token.content.trim(), { displayMode: true })}</div>`
     } catch (err) {
-      return `<div class="katex-error">${token.content}</div>`
+      return `<div class="katex-error">${token.content.trim()}</div>`
     }
   }
 }
@@ -194,6 +244,12 @@ function prismPlugin(md: MarkdownIt) {
     if (langName === 'mermaid') {
       // 让 mermaid 插件处理
       return fence(tokens, idx, options, env, renderer)
+    } else if (langName === 'katex') {
+      try {
+        return `<div class="katex-display">${katex.renderToString(token.content.trim(), { displayMode: true })}</div>`
+      } catch (err) {
+        return `<div class="katex-error">${token.content}</div>`
+      }
     }
 
     langName = langs[langName] || langName
