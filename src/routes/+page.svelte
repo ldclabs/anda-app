@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation'
 
   setTimeout(() => {
-    goto('/agent', {
+    goto('/assistant', {
       replaceState: true
     })
   }, 2000)

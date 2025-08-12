@@ -67,7 +67,7 @@
         outerClass="relative anda-nav"
         activeClass="font-bold text-green-500 hover:text-green-900 dark:hover:text-green-700 dark:text-green-300"
       >
-        <BottomNavItem btnName="Agent" href="/agent">
+        <BottomNavItem btnName="Assistant" href="/assistant">
           <UserHeadsetOutline size="lg" />
         </BottomNavItem>
         <!-- <BottomNavItem btnName="Discover" href="/discover">
@@ -152,7 +152,7 @@
         nonActiveClass="p-2"
       >
         <SidebarGroup>
-          <SidebarItem label="Agent" href="/agent">
+          <SidebarItem label="Assistant" href="/assistant">
             {#snippet icon()}
               <UserHeadsetOutline size="lg" />
             {/snippet}

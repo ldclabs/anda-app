@@ -1,7 +1,7 @@
 <script lang="ts">
   import ChatInput from '$lib/components/chat/ChatInput.svelte'
   import ChatMessage from '$lib/components/chat/ChatMessage.svelte'
-  import { chatStore } from '$lib/stores/chat.svelte'
+  import { assistantStore } from '$lib/stores/assistant.svelte'
   import { Button, Card } from 'flowbite-svelte'
   import { UserHeadsetOutline } from 'flowbite-svelte-icons'
   import { onMount } from 'svelte'
@@ -10,7 +10,7 @@
 
   // 自动滚动到底部
   $effect(() => {
-    if (chatStore.currentSession?.messages && messagesContainer) {
+    if (assistantStore.currentSession?.messages && messagesContainer) {
       setTimeout(() => {
         messagesContainer.scrollTop = messagesContainer.scrollHeight
       }, 100)
@@ -19,9 +19,9 @@
 
   onMount(() => {
     // 如果没有会话，创建一个默认会话
-    if (chatStore.sessions.length === 0) {
-      chatStore.createSession('欢迎使用 Anda AI')
-      chatStore.addMessage(
+    if (assistantStore.sessions.length === 0) {
+      assistantStore.createSession('欢迎使用 Anda AI')
+      assistantStore.addMessage(
         '你好！我是 Anda AI 助手，很高兴为你服务。有什么我可以帮助你的吗？',
         'assistant'
       )
@@ -29,20 +29,20 @@
   })
 
   function handleSendMessage(message: string) {
-    chatStore.sendMessage(message)
+    assistantStore.sendMessage(message)
   }
 
   function handleClearChat() {
-    chatStore.clearCurrentSession()
+    assistantStore.clearCurrentSession()
   }
 </script>
 
 <div class="relative flex h-full w-full flex-col items-center overflow-y-auto">
-  <div class="my-10 flex w-full max-w-4xl flex-1 flex-col">
-    {#if chatStore.currentSession}
+  <div class="my-10 flex w-full max-w-4xl flex-1 flex-col px-4">
+    {#if assistantStore.currentSession}
       <!-- 消息列表 -->
       <div bind:this={messagesContainer} class="w-full">
-        {#if chatStore.currentSession.messages.length === 0}
+        {#if assistantStore.currentSession.messages.length === 0}
           <div class="flex h-full w-full items-center justify-center">
             <Card class="max-w-md text-center">
               <UserHeadsetOutline
@@ -60,7 +60,7 @@
             </Card>
           </div>
         {:else}
-          {#each chatStore.currentSession.messages as message (message.id)}
+          {#each assistantStore.currentSession.messages as message (message.id)}
             <ChatMessage {message} />
           {/each}
         {/if}
@@ -76,7 +76,9 @@
           <p class="mb-4 text-gray-500 dark:text-gray-400">
             从左侧选择一个对话，或创建新的对话开始聊天。
           </p>
-          <Button onclick={() => chatStore.createSession()}>创建新对话</Button>
+          <Button onclick={() => assistantStore.createSession()}
+            >创建新对话</Button
+          >
         </Card>
       </div>
     {/if}
@@ -88,7 +90,10 @@
     <div
       class="rounded-4xl border border-white/40 bg-gray-200/60 shadow-lg backdrop-blur-xs dark:bg-gray-800/60"
     >
-      <ChatInput onSend={handleSendMessage} disabled={chatStore.isLoading} />
+      <ChatInput
+        onSend={handleSendMessage}
+        disabled={assistantStore.isLoading}
+      />
     </div>
   </div>
 </div>

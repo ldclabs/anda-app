@@ -2,6 +2,7 @@ use std::fmt::{Debug, Display};
 
 use serde::{Serialize, ser::Serializer};
 
+pub mod assistant;
 pub mod auth;
 
 use crate::BoxError;
@@ -28,6 +29,12 @@ impl std::error::Error for Error {}
 
 impl From<BoxError> for Error {
     fn from(source: BoxError) -> Self {
+        Self { source }
+    }
+}
+
+impl From<anda_core::BoxError> for Error {
+    fn from(source: anda_core::BoxError) -> Self {
         Self { source }
     }
 }

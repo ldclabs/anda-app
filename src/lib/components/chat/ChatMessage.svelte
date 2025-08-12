@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ChatMessage } from '$lib/types/chat'
+  import type { ChatMessage } from '$lib/types/assistant'
   import { getPlainText, renderMarkdown } from '$lib/utils/markdown'
   import { Clipboard, Spinner } from 'flowbite-svelte'
   import {
@@ -15,6 +15,7 @@
   let text = $state('')
   let textSuccess = $state(false)
   let mdSuccess = $state(false)
+  let isTyping = $state(false)
 
   function formatTime(date: Date): string {
     return date.toLocaleTimeString('zh-CN', {
@@ -72,7 +73,7 @@
         ? 'rounded-lg bg-gray-50 px-4 py-2 text-gray-900 dark:bg-gray-800 dark:text-white'
         : ''}"
     >
-      {#if message.isTyping}
+      {#if isTyping}
         <div class="flex items-center gap-2">
           <Spinner size="4" />
           <span class="text-sm">AI 正在思考...</span>
@@ -84,11 +85,9 @@
       {/if}
     </div>
 
-    {#if !message.isTyping}
-      <span class="text-xs text-gray-500 dark:text-gray-400">
-        {formatTime(message.timestamp)}
-      </span>
-    {/if}
+    <span class="text-xs text-gray-500 dark:text-gray-400">
+      {formatTime(message.timestamp)}
+    </span>
   </div>
 </div>
 

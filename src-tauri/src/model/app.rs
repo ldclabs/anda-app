@@ -3,7 +3,9 @@ use ic_agent::Identity;
 use ic_auth_types::{ByteArrayB64, ByteBufB64, SignedDelegationCompact};
 use ic_auth_verifier::{
     envelope::verify_delegation_chain,
-    identity::{BasicIdentity, DelegatedIdentity, signed_delegation_from},
+    identity::{
+        BasicIdentity, DelegatedIdentity, delegated_basic_identity, signed_delegation_from,
+    },
     unix_timestamp,
 };
 use ic_cose_types::cose::kdf::{derive_a256gcm_key, hkdf256};
@@ -46,6 +48,7 @@ pub struct Settings {
 pub struct SecretState {
     pub session_secret: SensitiveData<ByteArrayB64<32>>, // ed25519 private key
     pub auth: Option<InternetIdentityAuth>,
+    pub assistant: Option<AssistantConfig>,
 }
 
 impl SecretState {
@@ -89,5 +92,28 @@ impl InternetIdentityAuth {
         );
 
         Ok(id)
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AssistantConfig {
+    pub ed25519_secret: SensitiveData<ByteArrayB64<32>>, // ed25519 private key
+    pub root_secret: SensitiveData<ByteArrayB64<48>>,    // root private key
+    pub user_pubkey: ByteBufB64,
+    pub gemini_api_key: Option<String>,
+    pub deepseek_api_key: Option<String>,
+    pub grok_api_key: Option<String>,
+    pub openai_api_key: Option<String>,
+}
+
+impl AssistantConfig {
+    pub fn principal(&self) -> Principal {
+        Principal::self_authenticating(self.user_pubkey.as_slice())
+    }
+
+    pub fn to_identity(&self) -> DelegatedIdentity {
+        let expires_in_ms = 1000 * 3600 * 24 * 365;
+        let identity = BasicIdentity::from_raw_key(&self.ed25519_secret);
+        delegated_basic_identity(&identity, expires_in_ms)
     }
 }

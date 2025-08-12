@@ -14,6 +14,7 @@ export function isTauriEnvironment(): boolean {
 export function mockTauriOS() {
   if (
     typeof window !== 'undefined' &&
+    !isTauriEnvironment() &&
     !(window as any).__TAURI_OS_PLUGIN_INTERNALS__
   ) {
     ;(window as any).__TAURI_OS_PLUGIN_INTERNALS__ = {
@@ -50,9 +51,4 @@ export async function safeOsTypeAsync(): Promise<string> {
   }
 
   return safeOsType()
-}
-
-// Initialize mock in browser environment
-if (typeof window !== 'undefined' && !isTauriEnvironment()) {
-  mockTauriOS()
 }

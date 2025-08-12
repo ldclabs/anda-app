@@ -1,3 +1,5 @@
+use ic_agent::Identity;
+use ic_auth_verifier::BasicIdentity;
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_deep_link::DeepLinkExt;
 
@@ -10,8 +12,9 @@ mod tray;
 mod utils;
 
 use deeplink::{DeepLinkService, DeepLinkServiceExt};
-use model::app::{AppState, SecretState};
+use model::app::{AppState, AssistantConfig, SecretState};
 use service::{
+    assistant::{AndaAssistant, AndaAssistantExt},
     icp::{ICPClient, ICPClientExt},
     stablecell::{CipherCell, PlainCell},
 };
@@ -71,11 +74,15 @@ pub fn run() {
         .plugin(ICPClient::init())
         .plugin(DeepLinkService::init())
         .plugin(AppStateCell::init("app_state.cbor".into()))
+        .plugin(AndaAssistant::init("object_store".into()))
         .invoke_handler(tauri::generate_handler![
             api::auth::identity,
             api::auth::get_user,
             api::auth::sign_in,
             api::auth::logout,
+            api::assistant::assistant_info,
+            api::assistant::tool_call,
+            api::assistant::agent_run,
         ])
         .setup(|app| {
             if tauri::is_dev() {
@@ -137,6 +144,10 @@ pub fn run() {
 
             let secret_state = app.state::<SecretStateCell>();
             secret_state.with_mut(|state| {
+                if state.session_secret.as_slice() == [0u8; 32] {
+                    state.session_secret = SensitiveData(rand_bytes::<32>().into());
+                }
+
                 if let Some(auth) = &state.auth {
                     let principal = auth.principal();
                     match auth.to_identity(**state.session_secret) {
@@ -149,6 +160,21 @@ pub fn run() {
                     }
                 }
 
+                if state.assistant.is_none() {
+                    let ed25519_secret = rand_bytes::<32>();
+                    let id = BasicIdentity::from_raw_key(&ed25519_secret);
+
+                    state.assistant = Some(AssistantConfig {
+                        ed25519_secret: SensitiveData(ed25519_secret.into()),
+                        root_secret: SensitiveData(rand_bytes::<48>().into()),
+                        user_pubkey: id.public_key().unwrap().into(),
+                        gemini_api_key: None,
+                        deepseek_api_key: None,
+                        grok_api_key: None,
+                        openai_api_key: None,
+                    });
+                }
+
                 Ok::<(), String>(())
             })?;
             secret_state.save()?;
@@ -158,7 +184,8 @@ pub fn run() {
                 dls.on_open_url(event.urls());
             });
 
-            log::info!("Initialized application");
+            app.connect_assistant();
+            log::info!("Application initialized");
 
             Ok(())
         })
@@ -173,7 +200,7 @@ pub fn run() {
         .build(ctx)
         .expect("error while running tauri application");
 
-    app.run(|app_handle, event| match event {
+    app.run(|_app, event| match event {
         #[cfg(target_os = "macos")]
         tauri::RunEvent::Reopen {
             has_visible_windows,
@@ -185,8 +212,12 @@ pub fn run() {
             );
             if has_visible_windows {}
         }
-        _ => {
-            let _ = app_handle;
+        tauri::RunEvent::ExitRequested { code, .. } => {
+            log::info!("Exit requested event received: code = {code:?}");
         }
+        tauri::RunEvent::Exit => {
+            log::info!("Application is exiting");
+        }
+        _ => {}
     });
 }

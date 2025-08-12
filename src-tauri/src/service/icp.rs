@@ -19,6 +19,7 @@ use tauri::{
 pub const ICP_HOST: &str = "https://icp-api.io";
 
 pub const IDENTITY_EVENT: &str = "IdentityChanged";
+
 #[derive(Clone, Deserialize, Serialize)]
 pub struct IdentityInfo {
     pub id: Principal,
