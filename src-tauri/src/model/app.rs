@@ -42,6 +42,7 @@ impl AppState {
 pub struct Settings {
     pub locale: String,
     pub theme: Option<Theme>, // "light" | "dark"
+    pub https_proxy: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]

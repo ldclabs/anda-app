@@ -286,4 +286,9 @@
     border-radius: 0.5rem;
     margin: 0.5em 0;
   }
+
+  .chat-content :global(.katex-block) {
+    overflow-x: auto;
+    overflow-y: visible;
+  }
 </style>

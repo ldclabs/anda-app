@@ -1,10 +1,22 @@
 _version: 2
-tray.menu.open_main:
+menu.open_main:
   en: Open Anda AI
   zh: 打开 Anda AI
-tray.menu.follow_us:
+menu.follow_us:
   en: Follow Us
   zh: 关注我们
+menu.version:
+  en: Version %{version}
+  zh: 版本 %{version}
+menu.about:
+  en: About Anda AI
+  zh: 关于 Anda AI
+menu.check_update:
+  en: Check Update
+  zh: 检查更新
+menu.settings:
+  en: Settings...
+  zh: 设置...
 menu.quit:
   en: Quit
   zh: 退出

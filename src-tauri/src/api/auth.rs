@@ -6,7 +6,7 @@ use tauri::{AppHandle, Manager};
 
 use super::Result;
 use crate::SecretStateCell;
-use crate::deeplink::DeepLinkServiceExt;
+use crate::deeplink::{DeepLinkResponse, DeepLinkServiceExt};
 use crate::model::user::UserInfo;
 use crate::service::icp::{ICPClientExt, IdentityInfo};
 
@@ -38,6 +38,15 @@ pub async fn sign_in(app: AppHandle) -> Result<bool> {
     }
 
     app.deep_link_service().start_sign_in()?;
+    Ok(true)
+}
+
+#[tauri::command]
+pub async fn sign_in_by_url(app: AppHandle, url: String) -> Result<bool> {
+    if let Ok(dr) = DeepLinkResponse::from_str(&url) {
+        app.deep_link_service().on_sign_in(dr)?;
+    }
+
     Ok(true)
 }
 

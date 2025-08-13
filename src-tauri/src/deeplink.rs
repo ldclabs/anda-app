@@ -53,6 +53,10 @@ pub struct DeepLinkResponse {
 }
 
 impl DeepLinkResponse {
+    pub fn from_str(url: &str) -> Result<Self> {
+        let url = Url::parse(url).map_err(|e| format!("Invalid URL: {}", e))?;
+        Self::from_url(url)
+    }
     pub fn from_url(url: Url) -> Result<Self> {
         let mut query_pairs = url.query_pairs();
         let payload = match url.fragment() {
@@ -215,7 +219,7 @@ impl<R: Runtime> DeepLinkService<R> {
         }
     }
 
-    fn on_sign_in(&self, res: DeepLinkResponse) -> Result<()> {
+    pub fn on_sign_in(&self, res: DeepLinkResponse) -> Result<()> {
         let res: SignInResponse = res.get_payload()?;
         let auth = InternetIdentityAuth::from(res);
         let secret_state = self.app.state::<SecretStateCell>();

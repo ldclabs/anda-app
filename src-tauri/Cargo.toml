@@ -1,7 +1,7 @@
 [package]
-name = "anda"
+name = "Anda"
 version = "0.1.0"
-description = "Anda AI Agents client application"
+description = "Anda AI Assistant"
 authors = ["LDC Labs"]
 edition = "2024"
 publish = false

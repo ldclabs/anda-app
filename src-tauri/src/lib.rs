@@ -79,10 +79,16 @@ pub fn run() {
             api::auth::identity,
             api::auth::get_user,
             api::auth::sign_in,
+            api::auth::sign_in_by_url,
             api::auth::logout,
+            api::i18n::get_translation,
             api::assistant::assistant_info,
             api::assistant::tool_call,
             api::assistant::agent_run,
+            api::settings::get_settings,
+            api::settings::set_setting,
+            api::settings::get_secret_setting,
+            api::settings::set_secret_setting,
         ])
         .setup(|app| {
             if tauri::is_dev() {
@@ -190,6 +196,10 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
+            if window.label() != "main" {
+                return;
+            }
+
             if let WindowEvent::CloseRequested { api, .. } = event {
                 // https://tauri.app/v1/guides/features/system-tray/#preventing-the-app-from-closing
                 log::info!("Close requested event received");

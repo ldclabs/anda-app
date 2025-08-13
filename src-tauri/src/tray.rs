@@ -4,33 +4,58 @@
 
 use rust_i18n::t;
 use tauri::{
-    Manager, Runtime,
-    menu::{Menu, MenuItem},
+    Manager, Runtime, WebviewUrl, WebviewWindowBuilder,
+    image::Image,
+    menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
 use tauri_plugin_opener::OpenerExt;
 
 use crate::Result;
 
+static ICON_BYTES: &[u8] = include_bytes!("../icons/icon.png");
+
 pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
     let menu = Menu::with_items(
         app,
         &[
+            &MenuItem::with_id(app, "open_main", t!("menu.open_main"), true, None::<&str>)?,
+            &MenuItem::with_id(app, "follow_us", t!("menu.follow_us"), true, None::<&str>)?,
+            &PredefinedMenuItem::separator(app)?,
+            &PredefinedMenuItem::about(
+                app,
+                Some(&t!("menu.about")),
+                Some(AboutMetadata {
+                    name: Some("Anda AI".to_string()),
+                    version: Some(app.package_info().version.to_string()),
+                    short_version: Some(app.package_info().version.to_string()),
+                    authors: Some(vec!["ICPanda".to_string()]),
+                    comments: Some("Anda AI Assistant".to_string()),
+                    copyright: Some("Copyright 2025 LDC Labs".to_string()),
+                    license: Some("MIT".to_string()),
+                    website: Some("https://anda.ai".to_string()),
+                    website_label: Some("Anda AI".to_string()),
+                    credits: Some("ICPanda".to_string()),
+                    icon: Image::from_bytes(ICON_BYTES).ok(),
+                }),
+            )?,
             &MenuItem::with_id(
                 app,
-                "open-main",
-                t!("tray.menu.open_main"),
-                true,
+                "version",
+                t!("menu.version", version = app.package_info().version),
+                false,
                 None::<&str>,
             )?,
             &MenuItem::with_id(
                 app,
-                "follow-us",
-                t!("tray.menu.follow_us"),
-                true,
+                "check_update",
+                t!("menu.check_update"),
+                false,
                 None::<&str>,
             )?,
-            &MenuItem::with_id(app, "quit", t!("menu.quit"), true, None::<&str>)?,
+            &MenuItem::with_id(app, "settings", t!("menu.settings"), true, None::<&str>)?,
+            &PredefinedMenuItem::separator(app)?,
+            &PredefinedMenuItem::quit(app, Some(&t!("menu.quit")))?,
         ],
     )?;
 
@@ -44,18 +69,13 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
             "quit" => {
                 app.exit(0);
             }
-            "open-main" => {
-                if let Some(window) = app.get_webview_window("main") {
-                    match window.is_visible() {
-                        Ok(true) => {}
-                        _ => {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
-                    }
-                }
+            "open_main" => {
+                reopen_window(app, "main", None).unwrap();
             }
-            "follow-us" => {
+            "settings" => {
+                reopen_window(app, "settings", None).unwrap();
+            }
+            "follow_us" => {
                 let _ = app
                     .opener()
                     .open_url("https://x.com/ICPandaDAO", None::<&str>);
@@ -79,5 +99,39 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
         })
         .build(app);
 
+    Ok(())
+}
+
+fn reopen_window<R: Runtime>(
+    app: &tauri::AppHandle<R>,
+    label: &str,
+    search_params: Option<&str>,
+) -> Result<()> {
+    let window = match app.get_webview_window(label) {
+        Some(window) => window,
+        None => {
+            let mut cfg = app
+                .config()
+                .app
+                .windows
+                .iter()
+                .find(|w| w.label == label)
+                .ok_or_else(|| format!("window {} not found", label))?
+                .clone();
+            if let Some(params) = search_params
+                && let WebviewUrl::App(url) = &mut cfg.url {
+                    url.push(params);
+                };
+            WebviewWindowBuilder::from_config(app, &cfg)?.build()?
+        }
+    };
+
+    match window.is_visible() {
+        Ok(true) => {}
+        _ => {
+            let _ = window.show();
+        }
+    };
+    let _ = window.set_focus();
     Ok(())
 }

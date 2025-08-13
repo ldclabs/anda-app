@@ -242,12 +242,3 @@ impl<R: Runtime, T: Manager<R>> AndaAssistantExt<R> for T {
         });
     }
 }
-
-// Allows blocking on async code without creating a nested runtime.
-// fn run_async_command<F: std::future::Future>(cmd: F) -> F::Output {
-//     if tokio::runtime::Handle::try_current().is_ok() {
-//         tokio::task::block_in_place(|| tokio::runtime::Handle::current().block_on(cmd))
-//     } else {
-//         tauri::async_runtime::block_on(cmd)
-//     }
-// }

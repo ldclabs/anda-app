@@ -4,6 +4,8 @@ use serde::{Serialize, ser::Serializer};
 
 pub mod assistant;
 pub mod auth;
+pub mod i18n;
+pub mod settings;
 
 use crate::BoxError;
 

@@ -45,10 +45,10 @@ md.renderer.rules.link_open = function (tokens, idx, options, env, renderer) {
 function katexPlugin(md: MarkdownIt) {
   // 定义支持的分隔符
   const delimiters = [
-    { left: '$$', right: '$$', display: true },
-    { left: '$', right: '$', display: false },
-    { left: '\\(', right: '\\)', display: false },
-    { left: '\\[', right: '\\]', display: true }
+    { left: '$$', right: '$$', block: true, inline: true },
+    { left: '$', right: '$', block: false, inline: true },
+    { left: '\\(', right: '\\)', block: true, inline: true },
+    { left: '\\[', right: '\\]', block: true, inline: true }
   ]
 
   // 行内数学公式解析器
@@ -58,7 +58,7 @@ function katexPlugin(md: MarkdownIt) {
 
     // 检查所有行内分隔符
     for (const delimiter of delimiters) {
-      if (delimiter.display) continue // 跳过块级分隔符
+      if (!delimiter.inline) continue // 跳过块级分隔符
 
       const leftDelim = delimiter.left
       const rightDelim = delimiter.right
@@ -108,7 +108,7 @@ function katexPlugin(md: MarkdownIt) {
 
       // 检查所有块级分隔符
       for (const delimiter of delimiters) {
-        if (!delimiter.display) continue // 跳过行内分隔符
+        if (!delimiter.block) continue // 跳过行内分隔符
 
         const leftDelim = delimiter.left
         const rightDelim = delimiter.right
@@ -193,7 +193,7 @@ function katexPlugin(md: MarkdownIt) {
   md.renderer.rules.math_block = function (tokens, idx) {
     const token = tokens[idx]
     try {
-      return `<div class="katex-display">${katex.renderToString(token.content.trim(), { displayMode: true })}</div>`
+      return `<div class="katex-block">${katex.renderToString(token.content.trim(), { displayMode: true })}</div>`
     } catch (err) {
       return `<div class="katex-error">${token.content.trim()}</div>`
     }
@@ -246,7 +246,7 @@ function prismPlugin(md: MarkdownIt) {
       return fence(tokens, idx, options, env, renderer)
     } else if (langName === 'katex') {
       try {
-        return `<div class="katex-display">${katex.renderToString(token.content.trim(), { displayMode: true })}</div>`
+        return `<div class="katex-block">${katex.renderToString(token.content.trim(), { displayMode: true })}</div>`
       } catch (err) {
         return `<div class="katex-error">${token.content}</div>`
       }

@@ -17,7 +17,6 @@
   } from 'flowbite-svelte'
   import {
     ArrowRightToBracketOutline,
-    CogOutline,
     ComputerSpeakerOutline,
     UserCircleOutline,
     UserHeadsetOutline,
@@ -63,7 +62,7 @@
 
       <BottomNav
         {activeUrl}
-        innerClass="grid-cols-4"
+        innerClass="grid-cols-5"
         outerClass="relative anda-nav"
         activeClass="font-bold text-green-500 hover:text-green-900 dark:hover:text-green-700 dark:text-green-300"
       >
@@ -207,15 +206,6 @@
               </button>
             </li>
           {/if}
-
-          <li>
-            <button
-              id="dd-management"
-              class="flex w-full items-center rounded-sm p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-              ><CogOutline size="lg" /><span class="ms-3">Management</span
-              ></button
-            >
-          </li>
         </SidebarGroup>
       </Sidebar>
       <div class="relative h-full w-full overflow-auto">
