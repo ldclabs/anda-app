@@ -97,43 +97,37 @@ export const translations: Record<string, Record<string, string>> = {
     zh: '例如: http://127.0.0.1:7890'
   },
 
-  // AI settings
-  'settings.ai.title': {
-    en: 'AI Configuration',
-    zh: 'AI 配置'
+  // AI settings - 添加缺少的键
+  'settings.ai.provider.title': {
+    en: 'AI Provider',
+    zh: 'AI 提供商'
   },
-  'settings.ai.description': {
-    en: 'Configure API keys and related settings for AI services',
-    zh: '配置 AI 服务的 API 密钥和相关设置'
+  'settings.ai.provider.description': {
+    en: 'Choose your preferred AI service provider',
+    zh: '选择你的首选 AI 服务提供商'
   },
-  'settings.gemini.title': {
-    en: 'Gemini API Key',
-    zh: 'Gemini API Key'
+  'settings.ai.model': {
+    en: 'Model',
+    zh: '模型'
   },
-  'settings.gemini.description': {
-    en: 'API key for accessing Google Gemini AI service',
-    zh: '用于访问 Google Gemini AI 服务的 API 密钥'
+  'settings.ai.api_key': {
+    en: 'API Key',
+    zh: 'API 密钥'
   },
-  'settings.gemini.placeholder': {
-    en: 'Enter your Gemini API Key',
-    zh: '输入你的 Gemini API Key'
+  'settings.ai.api_base': {
+    en: 'API Base URL',
+    zh: 'API Base URL'
   },
-
-  // OpenAI/GPT-5 settings
-  'settings.openai.title': {
-    en: 'OpenAI API Key (GPT-5)',
-    zh: 'OpenAI API Key (GPT-5)'
-  },
-  'settings.openai.description': {
-    en: 'API key for accessing OpenAI GPT-5 service',
-    zh: '用于访问 OpenAI GPT-5 服务的 API 密钥'
-  },
-  'settings.openai.placeholder': {
-    en: 'Enter your OpenAI API Key',
-    zh: '输入你的 OpenAI API Key'
+  'settings.ai.save': {
+    en: 'Save AI Configuration',
+    zh: '保存 AI 配置'
   },
 
   // Messages
+  'settings.optional': {
+    en: 'Optional',
+    zh: '可选'
+  },
   'settings.saved': {
     en: 'Settings saved',
     zh: '设置已保存'
@@ -159,5 +153,65 @@ export const translations: Record<string, Record<string, string>> = {
   'language.chinese': {
     en: '中文',
     zh: '中文'
+  },
+
+  // App
+  'app.sign_in': {
+    en: 'Sign In',
+    zh: '登录'
+  },
+  'app.log_out': {
+    en: 'Logout',
+    zh: '退出登录'
+  },
+  'app.copy_text': {
+    en: 'Copy Text',
+    zh: '复制纯文本'
+  },
+  'app.copy_origin': {
+    en: 'Copy origin',
+    zh: '复制原始内容'
+  },
+
+  // Assistant
+  'assistant.title': {
+    en: 'Assistant',
+    zh: 'AI 助手'
+  },
+  'assistant.thinking': {
+    en: 'Thinking...',
+    zh: '思考中...'
+  },
+  'assistant.retry': {
+    en: 'Retry',
+    zh: '重试'
+  },
+  'assistant.run': {
+    en: 'Run',
+    zh: '运行'
+  },
+  'assistant.not_ready': {
+    en: 'Please configure AI service provider:',
+    zh: '请先配置 AI 服务提供商：'
+  },
+  'assistant.signin_required': {
+    en: 'Please sign in to start chatting:',
+    zh: '请先登录以开始对话：'
+  },
+  'assistant.prompt.placeholder': {
+    en: 'Type your message...',
+    zh: '输入你的消息...'
+  },
+  'assistant.hello.title_with_name': {
+    en: 'Hello, I am %{name}',
+    zh: '你好，我是 %{name}'
+  },
+  'assistant.hello.title': {
+    en: 'Give me a name and let our journey begin',
+    zh: '为我命名，开启进化之旅'
+  },
+  'assistant.hello.description': {
+    en: '---\n\nI am an AI companion that evolves with you.\n\n● **Shared Growth**\nForged by [KIP](https://github.com/ldclabs/KIP), my unique identity will be shaped by our conversations.\n\n● **Our Memories**\nLocally encrypted, our memories are ours alone.\n\n● **Web3 Identity**\nWith [ICP](https://internetcomputer.org/) authentication, we can access the new Agentic Network.',
+    zh: '---\n\n我是一个为你而生的进化型 AI 伙伴。\n\n● **共同成长**\n基于 [KIP](https://github.com/ldclabs/KIP) 构建，我们的会话将塑造独一无二的我。\n\n● **专属记忆**\n对话本地加密，我们的记忆只属于我们。\n\n● **Web3 身份**\n使用 [ICP](https://internetcomputer.org/) 身份验证，进入全新的智能体网络。'
   }
 }

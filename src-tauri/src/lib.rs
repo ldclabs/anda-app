@@ -1,5 +1,3 @@
-use ic_agent::Identity;
-use ic_auth_verifier::BasicIdentity;
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_deep_link::DeepLinkExt;
 
@@ -83,12 +81,14 @@ pub fn run() {
             api::auth::logout,
             api::i18n::get_translation,
             api::assistant::assistant_info,
+            api::assistant::assistant_name,
             api::assistant::tool_call,
             api::assistant::agent_run,
             api::settings::get_settings,
             api::settings::set_setting,
             api::settings::get_secret_setting,
             api::settings::set_secret_setting,
+            api::settings::open_settings_window,
         ])
         .setup(|app| {
             if tauri::is_dev() {
@@ -102,16 +102,6 @@ pub fn run() {
                 }
             }
 
-            #[cfg(desktop)]
-            {
-                #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
-                {
-                    app.deep_link().register("anda")?;
-                    app.deep_link().register_all()?;
-                }
-
-                tray::create_tray(app.handle())?;
-            }
 
             let app_state = app.state::<AppStateCell>();
             let aes_secret = app_state.with_mut(|state| {
@@ -132,7 +122,6 @@ pub fn run() {
                     };
                     state.settings.locale = locale;
                 }
-
                 rust_i18n::set_locale(&state.settings.locale);
 
                 if let Some(theme) = state.settings.theme {
@@ -167,23 +156,30 @@ pub fn run() {
                 }
 
                 if state.assistant.is_none() {
-                    let ed25519_secret = rand_bytes::<32>();
-                    let id = BasicIdentity::from_raw_key(&ed25519_secret);
-
                     state.assistant = Some(AssistantConfig {
-                        ed25519_secret: SensitiveData(ed25519_secret.into()),
                         root_secret: SensitiveData(rand_bytes::<48>().into()),
-                        user_pubkey: id.public_key().unwrap().into(),
-                        gemini_api_key: None,
-                        deepseek_api_key: None,
-                        grok_api_key: None,
-                        openai_api_key: None,
+                        preferred_provider: "gemini".to_string(),
+                        gemini: None,
+                        deepseek: None,
+                        xai: None,
+                        openai: None,
                     });
                 }
 
                 Ok::<(), String>(())
             })?;
             secret_state.save()?;
+
+            #[cfg(desktop)]
+            {
+                #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
+                {
+                    app.deep_link().register("anda")?;
+                    app.deep_link().register_all()?;
+                }
+
+                tray::create_tray(app.handle())?;
+            }
 
             let dls = app.deep_link_service_owned();
             app.deep_link().on_open_url(move |event| {
@@ -196,16 +192,27 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            if window.label() != "main" {
-                return;
+            match window.label() {
+                "settings" => {
+                    if let WindowEvent::CloseRequested { .. } = event {
+                        log::info!("Close settings window event received");
+                        window.app_handle().save_assistant();
+                        // 配置变更，建议重启 assistant
+                        window.app_handle().try_reconnect_assistant();
+                    }
+                }
+                "main" => {
+                    if let WindowEvent::CloseRequested { api, .. } = event {
+                        // https://tauri.app/v1/guides/features/system-tray/#preventing-the-app-from-closing
+                        log::info!("Close requested event received");
+                        api.prevent_close();
+                        window.hide().unwrap();
+                        window.app_handle().save_assistant();
+                    }
+                }
+                _ => {}
             }
 
-            if let WindowEvent::CloseRequested { api, .. } = event {
-                // https://tauri.app/v1/guides/features/system-tray/#preventing-the-app-from-closing
-                log::info!("Close requested event received");
-                window.hide().unwrap();
-                api.prevent_close();
-            }
         })
         .build(ctx)
         .expect("error while running tauri application");

@@ -4,7 +4,7 @@
 
 use rust_i18n::t;
 use tauri::{
-    Manager, Runtime, WebviewUrl, WebviewWindowBuilder,
+    AppHandle, Manager, Runtime, WebviewUrl, WebviewWindowBuilder,
     image::Image,
     menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -91,7 +91,10 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
             } = event
             {
                 let app = tray.app_handle();
-                if let Some(window) = app.get_webview_window("main") {
+                if let Some(window) = app.get_webview_window("settings") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                } else if let Some(window) = app.get_webview_window("main") {
                     let _ = window.show();
                     let _ = window.set_focus();
                 }
@@ -102,8 +105,8 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
     Ok(())
 }
 
-fn reopen_window<R: Runtime>(
-    app: &tauri::AppHandle<R>,
+pub fn reopen_window<R: Runtime>(
+    app: &AppHandle<R>,
     label: &str,
     search_params: Option<&str>,
 ) -> Result<()> {
@@ -119,9 +122,10 @@ fn reopen_window<R: Runtime>(
                 .ok_or_else(|| format!("window {} not found", label))?
                 .clone();
             if let Some(params) = search_params
-                && let WebviewUrl::App(url) = &mut cfg.url {
-                    url.push(params);
-                };
+                && let WebviewUrl::App(url) = &mut cfg.url
+            {
+                url.push(params);
+            };
             WebviewWindowBuilder::from_config(app, &cfg)?.build()?
         }
     };

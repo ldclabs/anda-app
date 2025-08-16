@@ -3,9 +3,7 @@ use ic_agent::Identity;
 use ic_auth_types::{ByteArrayB64, ByteBufB64, SignedDelegationCompact};
 use ic_auth_verifier::{
     envelope::verify_delegation_chain,
-    identity::{
-        BasicIdentity, DelegatedIdentity, delegated_basic_identity, signed_delegation_from,
-    },
+    identity::{BasicIdentity, DelegatedIdentity, signed_delegation_from},
     unix_timestamp,
 };
 use ic_cose_types::cose::kdf::{derive_a256gcm_key, hkdf256};
@@ -97,24 +95,67 @@ impl InternetIdentityAuth {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ModelProvider {
+    pub model: String,
+    pub api_key: String,
+    pub api_base: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AssistantConfig {
-    pub ed25519_secret: SensitiveData<ByteArrayB64<32>>, // ed25519 private key
-    pub root_secret: SensitiveData<ByteArrayB64<48>>,    // root private key
-    pub user_pubkey: ByteBufB64,
-    pub gemini_api_key: Option<String>,
-    pub deepseek_api_key: Option<String>,
-    pub grok_api_key: Option<String>,
-    pub openai_api_key: Option<String>,
+    pub root_secret: SensitiveData<ByteArrayB64<48>>, // root private key
+    #[serde(default)]
+    pub preferred_provider: String, // preferred model provider, e.g., "gemini", "openai"
+    pub gemini: Option<ModelProvider>,
+    pub deepseek: Option<ModelProvider>,
+    pub xai: Option<ModelProvider>,
+    pub openai: Option<ModelProvider>,
 }
 
 impl AssistantConfig {
-    pub fn principal(&self) -> Principal {
-        Principal::self_authenticating(self.user_pubkey.as_slice())
-    }
-
-    pub fn to_identity(&self) -> DelegatedIdentity {
-        let expires_in_ms = 1000 * 3600 * 24 * 365;
-        let identity = BasicIdentity::from_raw_key(&self.ed25519_secret);
-        delegated_basic_identity(&identity, expires_in_ms)
+    pub fn get_provider(&self) -> Option<(&str, &ModelProvider)> {
+        match self.preferred_provider.as_str() {
+            "gemini" => self
+                .gemini
+                .as_ref()
+                .and_then(|p| {
+                    if p.api_key.is_empty() {
+                        None
+                    } else {
+                        Some(("gemini", p))
+                    }
+                }),
+            "deepseek" => self
+                .deepseek
+                .as_ref()
+                .and_then(|p| {
+                    if p.api_key.is_empty() {
+                        None
+                    } else {
+                        Some(("deepseek", p))
+                    }
+                }),
+            "xai" => self
+                .xai
+                .as_ref()
+                .and_then(|p| {
+                    if p.api_key.is_empty() {
+                        None
+                    } else {
+                        Some(("xai", p))
+                    }
+                }),
+            "openai" => self
+                .openai
+                .as_ref()
+                .and_then(|p| {
+                    if p.api_key.is_empty() {
+                        None
+                    } else {
+                        Some(("openai", p))
+                    }
+                }),
+            _ => None,
+        }
     }
 }

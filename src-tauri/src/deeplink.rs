@@ -12,8 +12,10 @@ use tauri::{
 use tauri_plugin_opener::OpenerExt;
 
 use crate::{
-    AppStateCell, Result, SecretStateCell, model::app::InternetIdentityAuth,
-    service::icp::ICPClientExt, utils::SensitiveData,
+    AppStateCell, Result, SecretStateCell,
+    model::app::InternetIdentityAuth,
+    service::{assistant::AndaAssistantExt, icp::ICPClientExt},
+    utils::SensitiveData,
 };
 
 #[derive(Debug)]
@@ -232,6 +234,8 @@ impl<R: Runtime> DeepLinkService<R> {
             Ok::<_, Box<dyn std::error::Error>>(principal)
         })?;
         secret_state.save()?;
+        self.app.propose_reconnect_assistant();
+        self.app.try_reconnect_assistant();
         log::info!(
             service = "DeepLink",
             action = "SignIn",

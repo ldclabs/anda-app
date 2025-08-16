@@ -1,5 +1,5 @@
 use anda_assistant::Assistant;
-use anda_core::{BoxError, Path as DBPath, derivation_path_with};
+use anda_core::{BoxError, BoxPinFut, Path as DBPath, derivation_path_with};
 use anda_db::{
     database::{AndaDB, DBConfig},
     storage::StorageConfig,
@@ -9,39 +9,49 @@ use anda_engine::{
     engine::{AgentInfo, Engine, EngineBuilder},
     management::{BaseManagement, SYSTEM_PATH, Visibility},
     memory::MemoryTool,
-    model::{Model, gemini},
+    model::{Model, Proxy, deepseek, gemini, openai, request_client_builder, xai},
     store::{LocalFileSystem, Store},
 };
 use anda_object_store::EncryptedStoreBuilder;
 use anda_web3_client::client::Client as Web3Client;
 use arc_swap::ArcSwap;
 use futures::try_join;
-use ic_auth_verifier::AtomicIdentity;
+use ic_auth_types::ByteBufB64;
+use ic_auth_verifier::{AtomicIdentity, sha3_256};
+use parking_lot::RwLock;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::PathBuf,
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    },
 };
 use tauri::{
-    AppHandle, Manager, Runtime, async_runtime,
+    AppHandle, Emitter, Manager, Runtime, async_runtime,
     plugin::{Builder, TauriPlugin},
 };
 
-use crate::{SecretStateCell, model::app::AssistantConfig};
+use crate::{AppStateCell, SecretStateCell, model::app::AssistantConfig};
 
-use super::icp::ICP_HOST;
+use super::icp::{ICP_HOST, ICPClientExt};
+
+pub const ASSISTANT_EVENT: &str = "AssistantReady";
 
 pub struct AndaAssistant<R: Runtime> {
+    #[allow(dead_code)]
     app: AppHandle<R>,
     inner: Arc<InnerAssistant>,
 }
 
 struct InnerAssistant {
     dir: PathBuf,
-    identity: Arc<AtomicIdentity>,
-    db: ArcSwap<Option<Arc<AndaDB>>>,
+    db: RwLock<Option<Arc<AndaDB>>>,
+    web3: RwLock<Option<Arc<Web3Client>>>,
+    assistant: RwLock<Option<Arc<Assistant>>>,
     engine: ArcSwap<Engine>,
+    should_restart: Arc<AtomicU64>,
 }
 
 impl<R: Runtime> AndaAssistant<R> {
@@ -66,9 +76,11 @@ impl<R: Runtime> AndaAssistant<R> {
                     app: app.clone(),
                     inner: Arc::new(InnerAssistant {
                         dir,
-                        identity: Arc::new(AtomicIdentity::default()),
-                        db: ArcSwap::new(Arc::new(None)),
+                        db: RwLock::new(None),
+                        web3: RwLock::new(None),
+                        assistant: RwLock::new(None),
                         engine: ArcSwap::new(Arc::new(InnerAssistant::builder().empty())),
+                        should_restart: Arc::new(AtomicU64::new(0)),
                     }),
                 });
 
@@ -90,14 +102,26 @@ impl<R: Runtime> AndaAssistant<R> {
             .build()
     }
 
+    pub fn self_name(&self) -> BoxPinFut<Option<String>> {
+        let assistant = self.inner.assistant.read().clone();
+
+        Box::pin(async move {
+            if let Some(assistant) = assistant {
+                assistant.self_name().await
+            } else {
+                None
+            }
+        })
+    }
+
     pub fn engine(&self) -> Arc<Engine> {
         self.inner.engine.load().clone()
     }
 
     pub fn flush(&self) {
-        let db = self.inner.db.load().as_ref().clone();
+        let db = self.inner.db.read().clone();
         if let Some(db) = db {
-            async_runtime::block_on(async {
+            async_runtime::spawn(async move {
                 match db.flush().await {
                     Ok(_) => log::info!("Anda Assistant flushed successfully"),
                     Err(e) => log::error!("Failed to flush Anda Assistant: {}", e),
@@ -106,10 +130,11 @@ impl<R: Runtime> AndaAssistant<R> {
         }
     }
 
+    #[allow(dead_code)]
     pub fn close(&self) {
         let engine = self.inner.engine.load().clone();
-        let db = self.inner.db.load().as_ref().clone();
-        async_runtime::block_on(async {
+        let db = self.inner.db.read().clone();
+        async_runtime::block_on(async move {
             match try_join!(engine.close(), async {
                 if let Some(db) = db {
                     db.close().await?;
@@ -136,86 +161,144 @@ impl InnerAssistant {
         })
     }
 
-    async fn connect(&self, cfg: AssistantConfig) -> Result<(), BoxError> {
-        self.identity.set(Box::new(cfg.to_identity()));
-        let web3 = Web3Client::builder()
-            .with_ic_host(ICP_HOST)
-            .with_identity(self.identity.clone())
-            .with_root_secret(**cfg.root_secret)
-            .build()
-            .await?;
+    async fn connect(
+        &self,
+        identity: Arc<AtomicIdentity>,
+        cfg: AssistantConfig,
+        https_proxy: Option<String>,
+    ) -> Result<bool, BoxError> {
+        // ic_agent::Agent 的 HealthCheckActor 存在后台 loop 任务，无法主动停止
+        // 直接替换 Agent 会导致 panic，从而只能复用 web3 client
+        let web3 = self.web3.read().clone();
+        let web3 = if let Some(web3) = web3 {
+            web3
+        } else {
+            let web3 = Web3Client::builder()
+                .with_ic_host(ICP_HOST)
+                .with_identity(identity)
+                .with_root_secret(**cfg.root_secret)
+                .build()
+                .await?;
+
+            let web3 = Arc::new(web3);
+            *self.web3.write() = Some(web3.clone());
+            web3
+        };
 
         let my_principal = web3.get_principal();
         log::info!(
-            "start AI assistant, principal: {:?}",
+            "start AI assistant with principal ID: {:?}",
             my_principal.to_text()
         );
 
-        log::info!("start to connect object_store");
-        let os_secret = web3
-            .a256gcm_key(derivation_path_with(
-                &DBPath::from(SYSTEM_PATH),
-                vec![b"object_store".to_vec(), b"A256GCM".to_vec()],
-            ))
-            .await?;
+        let db = self.db.read().clone();
+        let db = if let Some(db) = db {
+            db
+        } else {
+            let os_secret = web3
+                .a256gcm_key(derivation_path_with(
+                    &DBPath::from(SYSTEM_PATH),
+                    vec![b"object_store".to_vec(), b"A256GCM".to_vec()],
+                ))
+                .await?;
 
-        let object_store = LocalFileSystem::new_with_prefix(&self.dir)?;
-        let object_store = EncryptedStoreBuilder::with_secret(object_store, 10000, os_secret)
-            .with_chunk_size(1024 * 1024)
-            .with_conditional_put()
-            .build();
-        let object_store = Arc::new(object_store);
+            let lock = sha3_256(&os_secret);
+            let object_store = LocalFileSystem::new_with_prefix(&self.dir)?;
+            let object_store = EncryptedStoreBuilder::with_secret(object_store, 10000, os_secret)
+                .with_chunk_size(1024 * 1024)
+                .with_conditional_put()
+                .build();
+            let object_store = Arc::new(object_store);
 
-        let db_config = DBConfig {
-            name: "anda_db".to_string(),
-            description: "Anda DB".to_string(),
-            storage: StorageConfig {
-                cache_max_capacity: 10000,
-                compress_level: 3,
-                object_chunk_size: 256 * 1024,
-                bucket_overload_size: 1024 * 1024,
-                max_small_object_size: 1024 * 1024 * 10,
-            },
-            lock: Some(my_principal.as_slice().to_vec().into()),
+            let db_config = DBConfig {
+                name: "anda_db".to_string(),
+                description: "Anda DB".to_string(),
+                storage: StorageConfig {
+                    cache_max_capacity: 10000,
+                    compress_level: 3,
+                    object_chunk_size: 256 * 1024,
+                    bucket_overload_size: 1024 * 1024,
+                    max_small_object_size: 1024 * 1024 * 10,
+                },
+                lock: Some(ByteBufB64(lock.into())),
+            };
+
+            let db = AndaDB::connect(object_store.clone(), db_config).await?;
+            let db = Arc::new(db);
+            *self.db.write() = Some(db.clone());
+            db
         };
 
-        let db = AndaDB::connect(object_store.clone(), db_config).await?;
-        let db = Arc::new(db);
-        let web3 = Arc::new(Web3SDK::from_web3(Arc::new(web3.clone())));
-        let agent = Assistant::connect(db.clone(), web3.clone()).await?;
-        let memory_tool = MemoryTool::new(agent.memory());
+        let web3 = Arc::new(Web3SDK::from_web3(web3));
+        let object_store = db.object_store().clone();
+        let assistant = Assistant::connect(db.clone(), None)
+            .await?
+            .with_max_input_tokens(256 * 1024);
+        let memory_tool = MemoryTool::new(assistant.memory());
 
-        self.db.store(Arc::new(Some(db)));
+        {
+            *self.assistant.write() = Some(Arc::new(assistant.clone()));
+        }
 
         // Build agent engine with all configured components
         let engine = Self::builder()
-            .with_web3_client(web3.clone())
+            .with_web3_client(web3)
             .with_store(Store::new(object_store))
             .with_management(Arc::new(BaseManagement {
                 controller: my_principal,
                 managers: BTreeSet::new(),
                 visibility: Visibility::Private,
             }))
-            .register_tools(agent.tools()?)?
+            .register_tools(assistant.tools()?)?
             .register_tool(memory_tool)?
-            .register_agent(agent)?
+            .register_agent(assistant)?
             .export_tools(vec![MemoryTool::NAME.to_string()]);
 
-        if let Some(api_key) = &cfg.gemini_api_key {
-            let model = Model::with_completer(Arc::new(
-                gemini::Client::new(api_key, None).completion_model(gemini::GEMINI_2_5_PRO),
-            ));
+        let mut http_client = request_client_builder();
+        if let Some(proxy) = https_proxy {
+            http_client = http_client.proxy(Proxy::all(proxy)?);
+        }
+
+        if let Some((name, provider)) = cfg.get_provider() {
+            let model = match name {
+                "gemini" => Model::with_completer(Arc::new(
+                    gemini::Client::new(&provider.api_key, provider.api_base.clone())
+                        .with_client(http_client.build()?)
+                        .completion_model(&provider.model),
+                )),
+                "deepseek" => Model::with_completer(Arc::new(
+                    deepseek::Client::new(&provider.api_key, provider.api_base.clone())
+                        .with_client(http_client.build()?)
+                        .completion_model(&provider.model),
+                )),
+                "xai" => Model::with_completer(Arc::new(
+                    xai::Client::new(&provider.api_key, provider.api_base.clone())
+                        .with_client(http_client.build()?)
+                        .completion_model(&provider.model),
+                )),
+                "openai" => Model::with_completer(Arc::new(
+                    openai::Client::new(&provider.api_key, provider.api_base.clone())
+                        .with_client(http_client.build()?)
+                        .completion_model(&provider.model),
+                )),
+                _ => return Err(format!("Unknown model provider: {}", name).into()),
+            };
 
             let engine = engine
                 .with_model(model)
                 .build(Assistant::NAME.to_string())
                 .await?;
             self.engine.store(Arc::new(engine));
-            Ok(())
+            log::info!(
+                "Connected to {} model provider with model: {}",
+                name,
+                provider.model
+            );
+            Ok(true)
         } else {
             self.engine.store(Arc::new(engine.empty()));
-            log::error!("Gemini API key is missing");
-            Ok(())
+            log::error!("LLM API key is missing");
+            Ok(false)
         }
     }
 }
@@ -223,6 +306,9 @@ impl InnerAssistant {
 pub trait AndaAssistantExt<R: Runtime> {
     fn assistant(&self) -> &AndaAssistant<R>;
     fn connect_assistant(&self);
+    fn propose_reconnect_assistant(&self);
+    fn try_reconnect_assistant(&self);
+    fn save_assistant(&self);
 }
 
 impl<R: Runtime, T: Manager<R>> AndaAssistantExt<R> for T {
@@ -231,14 +317,42 @@ impl<R: Runtime, T: Manager<R>> AndaAssistantExt<R> for T {
     }
 
     fn connect_assistant(&self) {
-        let secret_state = self.state::<SecretStateCell>();
-        let cfg = secret_state.with(|state| state.assistant.clone().unwrap());
+        let cfg = self
+            .state::<SecretStateCell>()
+            .with(|state| state.assistant.clone().unwrap());
+        let proxy = self
+            .state::<AppStateCell>()
+            .with(|state| state.settings.https_proxy.clone());
         let assistant = self.assistant().inner.clone();
+        let identity = self.icp().identity();
 
+        let app = self.app_handle().clone();
         async_runtime::spawn(async move {
-            assistant.connect(cfg).await.unwrap_or_else(|err| {
-                log::error!("Failed to connect assistant: {err}");
-            });
+            match assistant.connect(identity, cfg, proxy).await {
+                Ok(is_ready) => {
+                    let _ = app.emit(ASSISTANT_EVENT, is_ready);
+                }
+                Err(err) => {
+                    log::error!("Failed to connect assistant: {err}");
+                }
+            };
         });
+    }
+
+    fn propose_reconnect_assistant(&self) {
+        let assistant = self.assistant().inner.clone();
+        assistant.should_restart.fetch_add(1, Ordering::Relaxed);
+    }
+
+    fn try_reconnect_assistant(&self) {
+        let assistant = self.assistant().inner.clone();
+        let should_restart = assistant.should_restart.swap(0, Ordering::Relaxed);
+        if should_restart > 0 {
+            self.connect_assistant();
+        }
+    }
+
+    fn save_assistant(&self) {
+        self.state::<AndaAssistant<R>>().inner().flush();
     }
 }

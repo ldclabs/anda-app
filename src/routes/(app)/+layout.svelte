@@ -1,56 +1,36 @@
 <script lang="ts">
   import { page } from '$app/state'
-  import { authStore, get_user, logout, signIn } from '$lib/stores/auth.svelte'
-  import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri-mock'
+  import DiagnosisModal from '$lib/components/diagnosis/DiagnosisModal.svelte'
+  import { authStore, get_user, signIn } from '$lib/stores/auth.svelte'
+  import { t } from '$lib/stores/i18n'
+  import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri.mock'
   import { type as osType } from '@tauri-apps/plugin-os'
   import {
     BottomNav,
     BottomNavItem,
-    Dropdown,
-    DropdownGroup,
-    DropdownHeader,
-    DropdownItem,
     Sidebar,
     SidebarGroup,
     SidebarItem,
     Spinner
   } from 'flowbite-svelte'
-  import {
-    ArrowRightToBracketOutline,
-    ComputerSpeakerOutline,
-    UserCircleOutline,
-    UserHeadsetOutline,
-    WalletOutline
-  } from 'flowbite-svelte-icons'
+  import { UserCircleOutline, UserHeadsetOutline } from 'flowbite-svelte-icons'
+  import { setContext } from 'svelte'
 
   // Safe OS type detection
   const ot = isTauriEnvironment() ? osType() : safeOsType()
-  const enableMobile = ot != 'ios' && ot != 'android'
+  const diagnosisModalState = $state({
+    open: (view: 'kip' | 'conversation') => {}
+  })
+
+  setContext('diagnosisModalState', diagnosisModalState)
 
   let { children } = $props()
   let isMobile = $state(ot === 'ios' || ot === 'android')
   let activeUrl = $state(page.url.pathname)
-  let isSignIn = $state(false)
 
   $effect(() => {
     activeUrl = page.url.pathname
   })
-
-  async function onSignIn(event: Event) {
-    event.preventDefault()
-
-    isSignIn = true
-    setTimeout(() => {
-      isSignIn = false
-    }, 10000)
-
-    await signIn()
-  }
-
-  async function onLogout() {
-    isSignIn = false
-    await logout()
-  }
 </script>
 
 {#key authStore.auth.id}
@@ -66,7 +46,7 @@
         outerClass="relative anda-nav"
         activeClass="font-bold text-green-500 hover:text-green-900 dark:hover:text-green-700 dark:text-green-300"
       >
-        <BottomNavItem btnName="Assistant" href="/assistant">
+        <BottomNavItem btnName={t('assistant.title')} href="/assistant">
           <UserHeadsetOutline size="lg" />
         </BottomNavItem>
         <!-- <BottomNavItem btnName="Discover" href="/discover">
@@ -77,10 +57,10 @@
         </BottomNavItem> -->
         {#if authStore.auth.isAuthenticated()}
           {#await get_user()}
-            <BottomNavItem btnName="Sign In" href="#">
+            <BottomNavItem btnName={t('app.sign_in')} href="#">
               <UserCircleOutline
                 size="lg"
-                class={isSignIn ? 'animate-bounce' : ''}
+                class={authStore.isSigningIn ? 'animate-bounce' : ''}
               />
             </BottomNavItem>
           {:then userInfo}
@@ -97,49 +77,16 @@
             </BottomNavItem>
           {/await}
         {:else}
-          <BottomNavItem btnName="Sign In" onclick={onSignIn}>
+          <BottomNavItem btnName={t('app.sign_in')} onclick={signIn}>
             <UserCircleOutline
               size="lg"
-              class={isSignIn ? 'animate-bounce' : ''}
+              class={authStore.isSigningIn ? 'animate-bounce' : ''}
             />
           </BottomNavItem>
         {/if}
       </BottomNav>
     </main>
   {:else}
-    <Dropdown
-      simple
-      placement="top"
-      class="min-w-48"
-      offset={12}
-      triggeredBy="#dd-management"
-    >
-      <DropdownGroup>
-        <DropdownItem
-          class="flex w-full flex-row items-center gap-2 text-left"
-          onclick={() => {}}
-          disabled={true}><WalletOutline />Wallet</DropdownItem
-        >
-        {#if enableMobile}
-          <DropdownItem
-            class="flex w-full flex-row items-center gap-2 text-left"
-            onclick={() => (isMobile = !isMobile)}
-            ><ComputerSpeakerOutline />Switch UI</DropdownItem
-          >
-        {/if}
-      </DropdownGroup>
-      {#if authStore.auth.isAuthenticated()}
-        <DropdownHeader
-          class="border-t border-gray-200 px-0 dark:border-gray-700"
-        >
-          <DropdownItem
-            onclick={onLogout}
-            class="flex w-full flex-row items-center gap-2 text-left text-orange-600"
-            ><ArrowRightToBracketOutline />Logout
-          </DropdownItem>
-        </DropdownHeader>
-      {/if}
-    </Dropdown>
     <main class="relative grid h-dvh w-dvw grid-cols-[auto_1fr]">
       <Sidebar
         {activeUrl}
@@ -151,7 +98,7 @@
         nonActiveClass="p-2"
       >
         <SidebarGroup>
-          <SidebarItem label="Assistant" href="/assistant">
+          <SidebarItem label={t('assistant.title')} href="/assistant">
             {#snippet icon()}
               <UserHeadsetOutline size="lg" />
             {/snippet}
@@ -170,7 +117,7 @@
         <SidebarGroup border>
           {#if authStore.auth.isAuthenticated()}
             {#await get_user()}
-              <SidebarItem label="Sign In" href="#">
+              <SidebarItem label={t('app.sign_in')} href="#">
                 {#snippet icon()}
                   <UserCircleOutline size="lg" />
                 {/snippet}
@@ -197,10 +144,11 @@
             <li>
               <button
                 class="flex w-full items-center rounded-sm p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-                onclick={onSignIn}
+                onclick={signIn}
+                disabled={authStore.isSigningIn}
                 ><UserCircleOutline size="lg" />
-                <span class="ms-3">Sign In</span>
-                {#if isSignIn}
+                <span class="ms-3">{t('app.sign_in')}</span>
+                {#if authStore.isSigningIn}
                   <Spinner class="ms-3 inline-flex" size="4" />
                 {/if}
               </button>
@@ -208,9 +156,10 @@
           {/if}
         </SidebarGroup>
       </Sidebar>
-      <div class="relative h-full w-full overflow-auto">
+      <div class="relative h-full w-full overflow-auto dark:bg-gray-900">
         {@render children()}
       </div>
+      <DiagnosisModal callback={diagnosisModalState} />
     </main>
   {/if}
 {/key}

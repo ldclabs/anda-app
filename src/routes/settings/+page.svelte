@@ -3,12 +3,11 @@
   import { t } from '$lib/stores/i18n'
   import {
     get_secret_setting,
-    get_settings,
     secretSettingsStore,
     set_secret_setting,
     set_setting,
     settingsStore,
-    type SecretSettings,
+    type ModelProvider,
     type Settings
   } from '$lib/stores/settings.svelte'
   import { Input, Select, Toast } from 'flowbite-svelte'
@@ -22,16 +21,16 @@
   } from 'flowbite-svelte-icons'
   import { onMount } from 'svelte'
 
+  // 基础状态
   let isLoading = $state(false)
-
   let notification = $state<{
     type: 'success' | 'error'
     message: string
   } | null>(null)
   let toastStatus = $derived.by(() => !!notification)
-
   let activeSection = $state(page.url.searchParams.get('section') || 'general')
 
+  // 计算属性
   const navigationItems = $derived([
     { id: 'general', name: t('settings.nav.general'), icon: CogOutline },
     { id: 'appearance', name: t('settings.nav.appearance'), icon: EyeOutline },
@@ -42,7 +41,7 @@
   const themeOptions = $derived([
     { value: 'light', name: t('settings.theme.light') },
     { value: 'dark', name: t('settings.theme.dark') },
-    { value: '', name: t('settings.theme.system') }
+    { value: 'system', name: t('settings.theme.system') }
   ])
 
   const localeOptions = $derived([
@@ -50,14 +49,100 @@
     { value: 'zh', name: t('language.chinese') }
   ])
 
+  const providerOptions = [
+    { value: 'gemini', name: 'Google Gemini' },
+    { value: 'openai', name: 'OpenAI GPT' }
+  ]
+
+  let currentProvider = $state<'gemini' | 'openai'>(
+    secretSettingsStore.preferred_provider || 'gemini'
+  )
+
+  let providerState = $state<ModelProvider>(
+    secretSettingsStore[secretSettingsStore.preferred_provider || 'gemini'] || {
+      model: 'gemini-2.5-pro',
+      api_key: '',
+      api_base: ''
+    }
+  )
+
+  function setAIProvider() {
+    switch (currentProvider) {
+      case 'gemini':
+        providerState = secretSettingsStore[currentProvider] || {
+          model: 'gemini-2.5-pro',
+          api_key: '',
+          api_base: ''
+        }
+        break
+      case 'openai':
+        providerState = secretSettingsStore[currentProvider] || {
+          model: 'gpt-5',
+          api_key: '',
+          api_base: ''
+        }
+        break
+    }
+  }
+
+  const hasUnsavedChanges = $derived.by(() => {
+    const origin = secretSettingsStore[currentProvider] as ModelProvider
+    return (
+      currentProvider !== secretSettingsStore.preferred_provider ||
+      providerState.model !== origin?.model ||
+      providerState.api_key !== origin?.api_key ||
+      providerState.api_base !== origin?.api_base
+    )
+  })
+
+  const isFormValid = $derived.by(() => {
+    return (
+      providerState.model.trim() !== '' && providerState.api_key.trim() !== ''
+    )
+  })
+
+  const api_base_placeholder = $derived.by(() => {
+    switch (currentProvider) {
+      case 'gemini':
+        return 'https://generativelanguage.googleapis.com/v1beta/openai'
+      case 'openai':
+        return 'https://api.openai.com/v1'
+      default:
+        return ''
+    }
+  })
+
+  // AI 配置保存
+  async function saveAIProvider() {
+    try {
+      isLoading = true
+
+      // 保存首选提供商
+      await set_secret_setting('preferred_provider', currentProvider)
+      await set_secret_setting(currentProvider, {
+        model: providerState.model.trim(),
+        api_key: providerState.api_key.trim(),
+        api_base: providerState.api_base?.trim() || undefined
+      })
+
+      showNotification('success', t('settings.saved'))
+    } catch (error) {
+      console.error('Failed to save AI config:', error)
+      showNotification('error', t('settings.save_failed'))
+    } finally {
+      isLoading = false
+    }
+  }
+
+  // 工具函数
   function showNotification(type: 'success' | 'error', message: string) {
     notification = { type, message }
     setTimeout(() => {
       notification = null
-    }, 10000)
+    }, 6000)
   }
 
-  // 更新设置
+  // 设置更新函数
   async function updateSetting<K extends keyof Settings>(
     key: K,
     value: Settings[K]
@@ -74,35 +159,29 @@
     }
   }
 
-  // 更新秘密设置
-  async function updateSecretSetting<K extends keyof SecretSettings>(
-    key: K,
-    value: SecretSettings[K]
-  ) {
-    try {
-      isLoading = true
-      await set_secret_setting(key, value)
-      showNotification('success', t('settings.saved'))
-    } catch (error) {
-      console.error('Failed to update secret setting:', error)
-      showNotification('error', t('settings.save_failed'))
-    } finally {
-      isLoading = false
-    }
-  }
-
-  // 处理代理设置变化
   function handleProxyChange(event: Event) {
     const target = event.target as HTMLInputElement
-    updateSetting('https_proxy', target.value || undefined)
+    updateSetting('https_proxy', target.value || '')
   }
 
-  // 组件挂载时加载设置
+  // 组件挂载时初始化
   onMount(async () => {
     try {
       isLoading = true
-      await get_settings()
-      await get_secret_setting('gemini_api_key')
+      await Promise.all([
+        get_secret_setting('preferred_provider'),
+        get_secret_setting('gemini'),
+        get_secret_setting('openai')
+      ])
+
+      currentProvider = secretSettingsStore.preferred_provider || 'gemini'
+      providerState = secretSettingsStore[
+        secretSettingsStore.preferred_provider || 'gemini'
+      ] || {
+        model: 'gemini-2.5-pro',
+        api_key: '',
+        api_base: ''
+      }
     } catch (error) {
       console.error('Failed to load settings:', error)
       showNotification('error', t('settings.load_failed'))
@@ -160,12 +239,12 @@
       {#if activeSection === 'general'}
         <div class="space-y-8">
           <div>
-            <h2 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white"
-              >{t('settings.general.title')}</h2
-            >
-            <p class="text-gray-600 dark:text-gray-400"
-              >{t('settings.general.description')}</p
-            >
+            <h2 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
+              {t('settings.general.title')}
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400">
+              {t('settings.general.description')}
+            </p>
           </div>
 
           <!-- 语言设置 -->
@@ -176,11 +255,12 @@
               <div class="flex-1">
                 <h3
                   class="mb-1 text-lg font-medium text-gray-900 dark:text-white"
-                  >{t('settings.language.title')}</h3
                 >
-                <p class="text-sm text-gray-500 dark:text-gray-400"
-                  >{t('settings.language.description')}</p
-                >
+                  {t('settings.language.title')}
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  {t('settings.language.description')}
+                </p>
               </div>
               <div class="w-32">
                 <Select
@@ -203,12 +283,12 @@
       {#if activeSection === 'appearance'}
         <div class="space-y-8">
           <div>
-            <h2 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white"
-              >{t('settings.appearance.title')}</h2
-            >
-            <p class="text-gray-600 dark:text-gray-400"
-              >{t('settings.appearance.description')}</p
-            >
+            <h2 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
+              {t('settings.appearance.title')}
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400">
+              {t('settings.appearance.description')}
+            </p>
           </div>
 
           <!-- 主题设置 -->
@@ -219,11 +299,12 @@
               <div class="flex-1">
                 <h3
                   class="mb-1 text-lg font-medium text-gray-900 dark:text-white"
-                  >{t('settings.theme.title')}</h3
                 >
-                <p class="text-sm text-gray-500 dark:text-gray-400"
-                  >{t('settings.theme.description')}</p
-                >
+                  {t('settings.theme.title')}
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  {t('settings.theme.description')}
+                </p>
               </div>
               <div class="w-32">
                 <Select
@@ -246,12 +327,12 @@
       {#if activeSection === 'network'}
         <div class="space-y-8">
           <div>
-            <h2 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white"
-              >{t('settings.network.title')}</h2
-            >
-            <p class="text-gray-600 dark:text-gray-400"
-              >{t('settings.network.description')}</p
-            >
+            <h2 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
+              {t('settings.network.title')}
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400">
+              {t('settings.network.description')}
+            </p>
           </div>
 
           <!-- HTTPS 代理 -->
@@ -262,11 +343,12 @@
               <div>
                 <h3
                   class="mb-1 text-lg font-medium text-gray-900 dark:text-white"
-                  >{t('settings.proxy.title')}</h3
                 >
-                <p class="text-sm text-gray-500 dark:text-gray-400"
-                  >{t('settings.proxy.description')}</p
-                >
+                  {t('settings.proxy.title')}
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  {t('settings.proxy.description')}
+                </p>
               </div>
               <Input
                 type="text"
@@ -285,15 +367,15 @@
       {#if activeSection === 'ai'}
         <div class="space-y-8">
           <div>
-            <h2 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white"
-              >{t('settings.ai.title')}</h2
-            >
-            <p class="text-gray-600 dark:text-gray-400"
-              >{t('settings.ai.description')}</p
-            >
+            <h2 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
+              {t('settings.ai.provider.title')}
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400">
+              {t('settings.ai.provider.description')}
+            </p>
           </div>
 
-          <!-- Gemini API Key -->
+          <!-- AI 提供商选择 -->
           <div
             class="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800"
           >
@@ -301,59 +383,108 @@
               <div>
                 <h3
                   class="mb-1 text-lg font-medium text-gray-900 dark:text-white"
-                  >{t('settings.gemini.title')}</h3
                 >
-                <p class="text-sm text-gray-500 dark:text-gray-400"
-                  >{t('settings.gemini.description')}</p
-                >
+                  {t('settings.ai.provider.title')}
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  {t('settings.ai.provider.description')}
+                </p>
               </div>
-              <Input
-                type="text"
-                placeholder={t('settings.gemini.placeholder')}
-                value={secretSettingsStore.gemini_api_key || ''}
-                onchange={(e) =>
-                  updateSecretSetting(
-                    'gemini_api_key',
-                    (e.target as HTMLInputElement).value
-                  )}
+              <Select
+                bind:value={currentProvider}
                 disabled={isLoading}
+                onchange={setAIProvider}
                 class="w-full"
-              />
+              >
+                {#each providerOptions as option}
+                  <option value={option.value}>{option.name}</option>
+                {/each}
+              </Select>
             </div>
           </div>
 
-          <!-- OpenAI API Key (GPT-5) -->
+          <!-- 提供商配置 -->
           <div
             class="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800"
           >
             <div class="space-y-4">
+              <!-- 模型输入 -->
               <div>
-                <h3
-                  class="mb-1 text-lg font-medium text-gray-900 dark:text-white"
-                  >{t('settings.openai.title')}</h3
+                <label
+                  for="ai_model"
+                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
-                <p class="text-sm text-gray-500 dark:text-gray-400"
-                  >{t('settings.openai.description')}</p
-                >
+                  {t('settings.ai.model')} *
+                </label>
+                <Input
+                  type="text"
+                  id="ai_model"
+                  minlength={3}
+                  bind:value={providerState.model}
+                  disabled={isLoading}
+                  class="w-full"
+                  required
+                />
               </div>
-              <Input
-                type="text"
-                placeholder={t('settings.openai.placeholder')}
-                value={secretSettingsStore.openai_api_key || ''}
-                onchange={(e) =>
-                  updateSecretSetting(
-                    'openai_api_key',
-                    (e.target as HTMLInputElement).value
-                  )}
-                disabled={isLoading}
-                class="w-full"
-              />
+
+              <!-- API Key 输入 -->
+              <div>
+                <label
+                  for="ai_api_key"
+                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  {t('settings.ai.api_key')} *
+                </label>
+                <Input
+                  type="text"
+                  id="ai_api_key"
+                  minlength={10}
+                  bind:value={providerState.api_key}
+                  disabled={isLoading}
+                  class="w-full"
+                  required
+                />
+              </div>
+
+              <!-- API Base URL 输入 -->
+              <div>
+                <label
+                  for="ai_api_base"
+                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  {t('settings.ai.api_base')} ({t('settings.optional')})
+                </label>
+                <Input
+                  type="text"
+                  id="ai_api_base"
+                  placeholder={api_base_placeholder}
+                  bind:value={providerState.api_base}
+                  disabled={isLoading}
+                  class="w-full"
+                />
+              </div>
             </div>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="flex justify-end space-x-3">
+            <button
+              class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              onclick={saveAIProvider}
+              disabled={isLoading || !hasUnsavedChanges || !isFormValid}
+            >
+              {#if isLoading}
+                {t('settings.saving')}
+              {:else}
+                {t('settings.ai.save')}
+              {/if}
+            </button>
           </div>
         </div>
       {/if}
     </div>
 
+    <!-- 通知 Toast -->
     <Toast
       dismissable={false}
       color={notification?.type === 'success' ? 'green' : 'red'}

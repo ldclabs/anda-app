@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
+import { assistantStore } from './assistant.svelte'
 
 const IDENTITY_EVENT = 'IdentityChanged'
 
@@ -43,11 +44,20 @@ export class AuthInfo {
 }
 
 export const authStore = $state({
-  auth: new AuthInfo()
+  auth: new AuthInfo(),
+  user: null as UserInfo | null,
+  isSigningIn: false
 })
 
+let prevTimer: number | null = null
 export async function signIn() {
+  authStore.isSigningIn = true
   await invoke('sign_in')
+
+  prevTimer && clearTimeout(prevTimer)
+  prevTimer = setTimeout(() => {
+    authStore.isSigningIn = false
+  }, 60000)
 }
 
 export async function signInByUrl(url: string) {
@@ -60,7 +70,7 @@ export async function logout() {
 
 export async function get_user() {
   let user: UserInfo = await invoke('get_user')
-  console.log('get_user', user)
+  authStore.user = user
   return user
 }
 
@@ -70,8 +80,14 @@ async function init() {
   }
 
   listen<IdentityInfo>(IDENTITY_EVENT, (event) => {
-    console.log(`${IDENTITY_EVENT}: ${event}`)
     authStore.auth = new AuthInfo(event.payload)
+    authStore.user = null
+    if (authStore.auth.isAuthenticated()) {
+      authStore.isSigningIn = false
+      get_user()
+    }
+
+    assistantStore.reset_if_user_changed(authStore.auth.id)
   })
 
   const res: IdentityInfo = await invoke('identity')

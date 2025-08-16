@@ -13,15 +13,7 @@ export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
-  timestamp: Date
-}
-
-export interface ChatSession {
-  id: string
-  title: string
-  messages: ChatMessage[]
-  createdAt: Date
-  updatedAt: Date
+  timestamp: number
 }
 
 export interface Message {
@@ -35,6 +27,8 @@ export interface Message {
 
   /// Tool call that this message is responding to. If this message is a response to a tool call, this field should be set to the tool call ID.
   tool_call_id?: string
+
+  timestamp?: number
 }
 
 export interface Conversation {
@@ -68,19 +62,28 @@ export interface Conversation {
 }
 
 export function toChatMessages(conversation: Conversation): ChatMessage[] {
-  let timestamp = new Date(conversation.updated_at)
-  return conversation.messages.map(
-    (message, index) =>
-      ({
-        id: `${conversation._id}:${index}`,
-        content:
-          typeof message.content === 'string'
-            ? message.content
-            : JSON.stringify(message.content),
-        role: message.role,
-        timestamp
-      }) as ChatMessage
-  )
+  const res: ChatMessage[] = []
+  for (let i = 0; i < conversation.messages.length; i++) {
+    const message = conversation.messages[i]
+    if (
+      !message.content ||
+      message.name == '$system' ||
+      (message.role != 'user' && message.role != 'assistant')
+    ) {
+      continue
+    }
+
+    res.push({
+      id: `${conversation._id}:${i}`,
+      content:
+        typeof message.content === 'string'
+          ? message.content
+          : JSON.stringify(message.content), // TODO
+      role: message.role,
+      timestamp: message.timestamp || conversation.created_at
+    })
+  }
+  return res
 }
 
 export interface KIPLogs {
@@ -163,11 +166,7 @@ export interface AgentOutput {
   failed_reason?: string
   /** Tool calls returned by the LLM function calling. */
   tool_calls?: ToolCall[]
-  /**
-   * full_history will be included in `ctx.completion` response,
-   * but not be included in the engine response.
-   */
-  full_history?: Json[]
+
   /** A collection of artifacts generated during execution. */
   artifacts?: Resource[]
   /** The conversation ID. */
@@ -266,4 +265,93 @@ export interface FunctionDefinition {
    * If true the model should follow the exact schema.
    */
   strict?: boolean
+}
+
+export interface AgentInfo {
+  /// Unique account identifier of the agent.
+  handle: String
+
+  /// The dMsg.net canister where the agent profile is stored.
+  handle_canister?: Principal
+
+  /// Human readable name of the agent.
+  /// (e.g. "Anda ICP")
+  name: String
+
+  /// A human-readable description of the agent. Used to assist users and
+  /// other agents in understanding what the agent can do.
+  /// (e.g. "Agent that helps users with recipes and cooking.")
+  description: string
+
+  /// A endpoint URL for the agent. This is the URL that other agents and
+  /// users will use to communicate with the agent.
+  endpoint: string
+
+  /// The protocols the agent supports. It is a map of protocol name to
+  /// agent information.
+  /// (e.g. "ANDA" => "https://DOMAIN/.well-known/agents/{agent_id}"，
+  ///       "A2A" => "https://DOMAIN/.well-known/agent.json")
+  protocols: Record<string, string>
+
+  /// Payment protocols the agent supports.
+  /// (e.g. ["X402"])
+  payments: string[]
+}
+
+export interface EngineCard {
+  /// The principal ID of the engine.
+  id: Principal
+  /// Information about the agent, including name, description, and supported protocols.
+  info: AgentInfo
+  /// Definitions for agents in the engine.
+  agents: Function[]
+  /// Definitions for tools in the engine.
+  tools: Function[]
+}
+
+/**
+ * MemoryToolArgs - 会话/日志相关 API 参数
+ */
+export type MemoryToolArgs =
+  | {
+      /** Get a conversation by ID */
+      _type: 'GetConversation'
+      /** The ID of the conversation to get */
+      _id: number
+    }
+  | {
+      /** List previous conversations */
+      _type: 'ListPrevConversations'
+      /** The cursor for pagination */
+      cursor?: string
+      /** The limit for pagination, default to 10 */
+      limit?: number
+    }
+  | {
+      /** Search conversations */
+      _type: 'SearchConversations'
+      /** The query string to search */
+      query: string
+      /** The max number of conversations to return, default to 10 */
+      limit?: number
+    }
+  | {
+      /** List KIP logs */
+      _type: 'ListKipLogs'
+      /** The cursor for pagination */
+      cursor?: string
+      /** The limit for pagination, default to 10 */
+      limit?: number
+    }
+
+export interface ErrorObject {
+  name: string
+  message: string
+  data?: Json
+}
+
+export interface Response<T> {
+  result?: T
+  next_cursor?: string
+  error?: ErrorObject
 }

@@ -3,13 +3,20 @@ import { listen } from '@tauri-apps/api/event'
 
 export interface Settings {
   locale: string
-  theme: 'light' | 'dark' | null
+  theme: 'light' | 'dark' | 'system'
   https_proxy?: string
 }
 
 export interface SecretSettings {
-  gemini_api_key?: string
-  openai_api_key?: string
+  preferred_provider: 'gemini' | 'openai'
+  gemini?: ModelProvider // model: 'gemini-2.5-pro'
+  openai?: ModelProvider // model: 'gpt-5' or 'gpt-5-2025-08-07' ?
+}
+
+export interface ModelProvider {
+  model: string
+  api_key: string
+  api_base?: string
 }
 
 export const settingsStore = $state({
@@ -18,42 +25,56 @@ export const settingsStore = $state({
 } as Settings)
 
 export const secretSettingsStore = $state({
-  gemini_api_key: '',
-  openai_api_key: ''
+  preferred_provider: 'gemini'
 } as SecretSettings)
 
 export async function get_settings() {
-  let res: Settings = await invoke('get_settings')
+  const res: Settings = await invoke('get_settings')
+  if (!res.theme) {
+    res.theme = 'system'
+  }
   Object.assign(settingsStore, res)
+  console.log('settingsStore', settingsStore)
 }
 
 export async function set_setting(
   key: keyof Settings,
   value: Settings[keyof Settings]
 ) {
-  let res: Settings = await invoke('set_setting', {
+  await invoke('set_setting', {
     key,
     value
   })
-  Object.assign(settingsStore, res)
 }
 
 export async function get_secret_setting(key: keyof SecretSettings) {
-  let value: string = await invoke('get_secret_setting', {
-    key
-  })
-  secretSettingsStore[key] = value
+  let value = await invoke<SecretSettings[keyof SecretSettings]>(
+    'get_secret_setting',
+    {
+      key
+    }
+  )
+  ;(secretSettingsStore[key] as any) = value
 }
 
 export async function set_secret_setting(
   key: keyof SecretSettings,
   value: SecretSettings[keyof SecretSettings]
 ) {
-  await invoke('set_secret_setting', {
+  const updated = await invoke<boolean>('set_secret_setting', {
     key,
     value
   })
-  secretSettingsStore[key] = value
+
+  if (updated) {
+    ;(secretSettingsStore[key] as any) = value
+  }
+}
+
+export function open_settings_window(params?: string) {
+  invoke('open_settings_window', {
+    params
+  })
 }
 
 async function init() {

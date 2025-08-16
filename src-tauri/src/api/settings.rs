@@ -1,10 +1,21 @@
+use anda_core::Json;
+use serde_json::json;
 use tauri::{AppHandle, Emitter, Manager, Theme};
 
 use super::Result;
-use crate::{AppStateCell, BoxError, SecretStateCell, model::app::Settings};
+use crate::{
+    AppStateCell, BoxError, SecretStateCell, model::app::Settings,
+    service::assistant::AndaAssistantExt, tray::reopen_window,
+};
 
 pub const SETTINGS_EVENT: &str = "SettingsChanged";
 pub const SECRET_SETTINGS_EVENT: &str = "SecretSettingsChanged";
+
+#[tauri::command]
+pub async fn open_settings_window(app: AppHandle, params: Option<String>) -> Result<()> {
+    reopen_window(&app, "settings", params.as_deref())?;
+    Ok(())
+}
 
 #[tauri::command]
 pub async fn get_settings(app: AppHandle) -> Result<Settings> {
@@ -14,71 +25,96 @@ pub async fn get_settings(app: AppHandle) -> Result<Settings> {
 }
 
 #[tauri::command]
-pub async fn set_setting(app: AppHandle, key: String, value: String) -> Result<Settings> {
+pub async fn set_setting(app: AppHandle, key: String, value: Json) -> Result<bool> {
     let app_state = app.state::<AppStateCell>();
-    // TODO: validate value
-    match key.as_str() {
-        "locale" => {
-            app_state.with_mut(|state| {
-                state.settings.locale = value;
-                Ok::<(), BoxError>(())
-            })?;
-        }
-        "theme" => {
-            let theme = match value.as_str() {
-                "light" => Some(Theme::Light),
-                "dark" => Some(Theme::Dark),
-                _ => None,
-            };
-            app_state.with_mut(|state| {
+    let updated = app_state.with_mut(|state| {
+        // TODO: validate value
+        match key.as_str() {
+            "locale" => {
+                match value.as_str() {
+                    Some(v) => state.settings.locale = v.to_string(),
+                    None => return Err("Invalid locale value".into()),
+                }
+                rust_i18n::set_locale(&state.settings.locale);
+                Ok::<bool, BoxError>(true)
+            }
+            "theme" => {
+                let theme = match value.as_str() {
+                    Some("light") => Some(Theme::Light),
+                    Some("dark") => Some(Theme::Dark),
+                    _ => None,
+                };
                 state.settings.theme = theme;
-                Ok::<(), BoxError>(())
-            })?;
+                Ok::<bool, BoxError>(true)
+            }
+            "https_proxy" => {
+                match value.as_str() {
+                    Some(v) => {
+                        app.propose_reconnect_assistant();
+                        state.settings.https_proxy = if v.is_empty() {
+                            None
+                        } else {
+                            Some(v.to_string())
+                        }
+                    }
+                    None => return Err("Invalid https_proxy value".into()),
+                }
+                Ok::<bool, BoxError>(true)
+            }
+            _ => Err(format!("Unknown setting key: {:?}", key).into()),
         }
-        "https_proxy" => {
-            app_state.with_mut(|state| {
-                state.settings.https_proxy = if value.is_empty() { None } else { Some(value) };
-                Ok::<(), BoxError>(())
-            })?;
-        }
-        _ => return Err(format!("Unknown setting key: {:?}", key).into()),
-    }
+    })?;
 
-    app_state.save()?;
-    let _ = app.emit(SETTINGS_EVENT, key);
-    Ok(app_state.with(|state| state.settings.clone()))
+    if updated {
+        app_state.save()?;
+        let _ = app.emit(SETTINGS_EVENT, key);
+    }
+    Ok(updated)
 }
 
 #[tauri::command]
-pub async fn get_secret_setting(app: AppHandle, key: String) -> Result<String> {
+pub async fn get_secret_setting(app: AppHandle, key: String) -> Result<Json> {
     let secret_state = app.state::<SecretStateCell>();
     secret_state.with(|state| match key.as_str() {
-        "gemini_api_key" => match state.assistant.as_ref() {
-            Some(cfg) => Ok(cfg.gemini_api_key.clone().unwrap_or_default()),
-            None => Ok(String::new()),
+        "preferred_provider" => match state.assistant.as_ref() {
+            Some(cfg) => Ok(json!(&cfg.preferred_provider)),
+            None => Ok(Json::Null),
         },
-        "openai_api_key" => match state.assistant.as_ref() {
-            Some(cfg) => Ok(cfg.openai_api_key.clone().unwrap_or_default()),
-            None => Ok(String::new()),
+        "gemini" => match state.assistant.as_ref() {
+            Some(cfg) => Ok(cfg.gemini.as_ref().map(|v| json!(v)).unwrap_or(Json::Null)),
+            None => Ok(Json::Null),
+        },
+        "openai" => match state.assistant.as_ref() {
+            Some(cfg) => Ok(cfg.openai.as_ref().map(|v| json!(v)).unwrap_or(Json::Null)),
+            None => Ok(Json::Null),
         },
         _ => Err(format!("Unknown secret setting key: {:?}", key).into()),
     })
 }
 
 #[tauri::command]
-pub async fn set_secret_setting(app: AppHandle, key: String, value: String) -> Result<()> {
+pub async fn set_secret_setting(app: AppHandle, key: String, value: Json) -> Result<bool> {
     let secret_state = app.state::<SecretStateCell>();
     let updated = secret_state.with_mut(|state| match key.as_str() {
-        "gemini_api_key" => {
-            if let Some(cfg) = state.assistant.as_mut() {
-                cfg.gemini_api_key = Some(value);
+        "preferred_provider" => {
+            if let Some(cfg) = state.assistant.as_mut()
+                && let Some(v) = value.as_str()
+            {
+                cfg.preferred_provider = v.to_string();
                 return Ok::<bool, BoxError>(true);
             }
             Ok(false)
         }
-        "openai_api_key" => {
+        "gemini" => {
             if let Some(cfg) = state.assistant.as_mut() {
-                cfg.openai_api_key = Some(value);
+                cfg.gemini = Some(serde_json::from_value(value)?);
+                return Ok::<bool, BoxError>(true);
+            }
+            Ok(false)
+        }
+        "openai" => {
+            if let Some(cfg) = state.assistant.as_mut() {
+                cfg.openai = Some(serde_json::from_value(value)?);
                 return Ok::<bool, BoxError>(true);
             }
             Ok(false)
@@ -88,7 +124,8 @@ pub async fn set_secret_setting(app: AppHandle, key: String, value: String) -> R
 
     if updated {
         secret_state.save()?;
+        app.propose_reconnect_assistant();
         let _ = app.emit(SECRET_SETTINGS_EVENT, key);
     }
-    Ok(())
+    Ok(updated)
 }

@@ -13,6 +13,11 @@ pub async fn assistant_info(app: AppHandle) -> Result<EngineCard> {
 }
 
 #[tauri::command]
+pub async fn assistant_name(app: AppHandle) -> Option<String> {
+    app.assistant().self_name().await
+}
+
+#[tauri::command]
 pub async fn tool_call(app: AppHandle, input: ToolInput<Json>) -> Result<ToolOutput<Json>> {
     let id = app.icp().identity();
     let caller = id.sender().unwrap();

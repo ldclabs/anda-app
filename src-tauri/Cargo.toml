@@ -1,5 +1,5 @@
 [package]
-name = "Anda"
+name = "Anda_AI"
 version = "0.1.0"
 description = "Anda AI Assistant"
 authors = ["LDC Labs"]
@@ -25,7 +25,7 @@ aes-gcm = "0.10"
 anda_core = "0.7"
 anda_engine = "0.7"
 anda_web3_client = "0.7"
-anda_assistant = "0.1"
+anda_assistant = "0.2"
 anda_object_store = "0.1"
 anda_db = "0.5"
 ciborium = "0.2"

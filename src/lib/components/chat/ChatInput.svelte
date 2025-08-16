@@ -1,15 +1,21 @@
 <script lang="ts">
+  import { t } from '$lib/stores/i18n'
   import { Button } from 'flowbite-svelte'
+  import { onDestroy } from 'svelte'
 
   let {
+    user,
     onSend,
     disabled = false
   }: {
+    user: string
     onSend: (message: string) => void
     disabled?: boolean
   } = $props()
 
-  let message = $state('')
+  const messageCacheKey = `MessageDraft:${user}`
+
+  let message = $state(sessionStorage.getItem(messageCacheKey) || '')
   let textareaRef = $state() as HTMLTextAreaElement
   let submitting = $state(false)
 
@@ -18,6 +24,7 @@
     if (trimmedMessage && !disabled) {
       onSend(trimmedMessage)
       message = ''
+      sessionStorage.removeItem(messageCacheKey)
       // Reset textarea height
       if (textareaRef) {
         textareaRef.style.height = 'auto'
@@ -47,6 +54,13 @@
       textareaRef.style.height = newHeight + 'px'
     }
   }
+
+  onDestroy(() => {
+    message = message.trim()
+    if (message) {
+      sessionStorage.setItem(messageCacheKey, message)
+    }
+  })
 </script>
 
 <div
@@ -56,7 +70,7 @@
     id="prompt-input"
     bind:this={textareaRef}
     bind:value={message}
-    placeholder="Start typing a prompt"
+    placeholder={t('assistant.prompt.placeholder')}
     rows={1}
     class="min-h-8 resize-none rounded-lg border-0 p-2 placeholder-gray-500 focus:border-0 focus:ring-0 dark:placeholder-gray-400"
     onkeydown={handleKeydown}
@@ -68,6 +82,6 @@
     disabled={disabled || !message.trim()}
     class="flex items-center justify-center rounded-4xl border-0 px-4 py-2"
   >
-    <span>Run <b>⌘ ↵</b></span>
+    <span>{t('assistant.run')} <b>⌘ ↵</b></span>
   </Button>
 </div>
