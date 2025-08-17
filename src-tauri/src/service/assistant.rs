@@ -133,22 +133,19 @@ impl<R: Runtime> AndaAssistant<R> {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn close(&self) {
+    pub async fn close(&self) {
         self.inner.cancel_token.cancel();
         let engine = self.inner.engine.load().clone();
         let db = self.inner.db.read().clone();
-        async_runtime::block_on(async move {
-            match try_join!(engine.close(), async {
-                if let Some(db) = db {
-                    db.close().await?;
-                }
-                Ok(())
-            }) {
-                Ok(_) => log::info!("Anda Assistant closed successfully"),
-                Err(e) => log::error!("Failed to close Anda Assistant: {}", e),
+        match try_join!(engine.close(), async {
+            if let Some(db) = db {
+                db.close().await?;
             }
-        });
+            Ok(())
+        }) {
+            Ok(_) => log::info!("Anda Assistant closed successfully"),
+            Err(e) => log::error!("Failed to close Anda Assistant: {}", e),
+        }
     }
 }
 

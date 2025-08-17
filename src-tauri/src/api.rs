@@ -6,6 +6,7 @@ pub mod assistant;
 pub mod auth;
 pub mod i18n;
 pub mod settings;
+pub mod updater;
 
 use crate::BoxError;
 
@@ -38,6 +39,22 @@ impl From<BoxError> for Error {
 impl From<anda_core::BoxError> for Error {
     fn from(source: anda_core::BoxError) -> Self {
         Self { source }
+    }
+}
+
+impl From<tauri_plugin_updater::Error> for Error {
+    fn from(source: tauri_plugin_updater::Error) -> Self {
+        Error {
+            source: Box::new(source),
+        }
+    }
+}
+
+impl From<tauri::Error> for Error {
+    fn from(source: tauri::Error) -> Self {
+        Error {
+            source: Box::new(source),
+        }
     }
 }
 

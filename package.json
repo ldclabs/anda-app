@@ -21,6 +21,7 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-os": "^2",
+    "@tauri-apps/plugin-updater": "~2.9.0",
     "debounce": "^2.2.0",
     "emoji-toolkit": "^9.0.1",
     "katex": "^0.16.22",

@@ -72,11 +72,20 @@
     },
     "deep-link-service": {
       "signInEndpoint": "https://dmsg.net/_/oauth/deeplink"
+    },
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEFDOEM5MDM4OTg3QkIxQTIKUldTaXNYdVlPSkNNckhXc0ZmT3FiQUVRZFQwREhvenFudENDMHFZMWVTUjFQSHhtKzEvYlV4bncK",
+      "endpoints": [
+        "https://github.com/ldclabs/anda-app/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   },
   "bundle": {
     "active": true,
-    "createUpdaterArtifacts": false,
+    "createUpdaterArtifacts": true,
     "category": "Utility",
     "shortDescription": "Anda AI",
     "targets": [

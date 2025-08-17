@@ -35,7 +35,9 @@ pub fn run() {
 
     #[cfg(desktop)]
     {
-        app_builder = app_builder.plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+        app_builder = app_builder
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             log::info!(
                 cwd = cwd,
                 argv:serde = argv;
@@ -89,6 +91,9 @@ pub fn run() {
             api::settings::get_secret_setting,
             api::settings::set_secret_setting,
             api::settings::open_settings_window,
+            api::updater::quit,
+            api::updater::restart,
+            api::updater::check_update,
         ])
         .setup(|app| {
             if tauri::is_dev() {
@@ -177,6 +182,8 @@ pub fn run() {
                     app.deep_link().register("anda")?;
                     app.deep_link().register_all()?;
                 }
+
+                app.manage(api::updater::Updater::default());
 
                 tray::create_tray(app.handle())?;
             }

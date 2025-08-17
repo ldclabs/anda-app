@@ -4,14 +4,14 @@
 
 use rust_i18n::t;
 use tauri::{
-    AppHandle, Manager, Runtime, WebviewUrl, WebviewWindowBuilder,
+    AppHandle, Manager, Runtime, WebviewUrl, WebviewWindowBuilder, async_runtime,
     image::Image,
     menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
 use tauri_plugin_opener::OpenerExt;
 
-use crate::Result;
+use crate::{Result, service::assistant::AndaAssistantExt};
 
 static ICON_BYTES: &[u8] = include_bytes!("../icons/icon.png");
 
@@ -46,16 +46,16 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
                 false,
                 None::<&str>,
             )?,
-            &MenuItem::with_id(
-                app,
-                "check_update",
-                t!("menu.check_update"),
-                false,
-                None::<&str>,
-            )?,
+            // &MenuItem::with_id(
+            //     app,
+            //     "check_update",
+            //     t!("menu.check_update"),
+            //     false,
+            //     None::<&str>,
+            // )?,
             &MenuItem::with_id(app, "settings", t!("menu.settings"), true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
-            &PredefinedMenuItem::quit(app, Some(&t!("menu.quit")))?,
+            &MenuItem::with_id(app, "quit", t!("menu.quit"), true, None::<&str>)?,
         ],
     )?;
 
@@ -67,7 +67,7 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
         .on_tray_icon_event(|_tray, _event| {})
         .on_menu_event(move |app, event| match event.id.as_ref() {
             "quit" => {
-                app.exit(0);
+                quit(app);
             }
             "open_main" => {
                 reopen_window(app, "main", None).unwrap();
@@ -102,6 +102,14 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
         .build(app);
 
     Ok(())
+}
+
+fn quit<R: Runtime>(app: &AppHandle<R>) {
+    let app = app.clone();
+    async_runtime::spawn(async move {
+        app.assistant().close().await;
+        app.exit(0)
+    });
 }
 
 pub fn reopen_window<R: Runtime>(
