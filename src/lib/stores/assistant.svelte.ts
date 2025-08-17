@@ -10,6 +10,7 @@ import type {
   ToolInput,
   ToolOutput
 } from '$lib/types/assistant'
+import { isThinking } from '$lib/types/assistant'
 import { sleep } from '$lib/utils/helper'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
@@ -57,8 +58,9 @@ class AssistantStore {
   private _latestConversationId = $state<number>(0)
   private _isLoading = $state(false)
   private _isLoadingPrev = $state(false)
-  private _isChating = $state(false)
-  private _user = $state<string>('2vxsx-fae')
+  private _isThinking = $state(false)
+  private _userID = '2vxsx-fae'
+  private _userName = ''
   private _isReady = $state(false)
 
   get isReady() {
@@ -77,23 +79,28 @@ class AssistantStore {
     return this._isLoadingPrev
   }
 
-  get isChating() {
-    return this._isChating
+  get isThinking() {
+    return this._isThinking
   }
 
   get latestConversationId() {
     return this._latestConversationId
   }
 
-  reset_if_user_changed(user: string) {
-    if (user == this._user) return
-    this._user = user
+  set userName(name: string) {
+    this._userName = name
+  }
+
+  set userID(id: string) {
+    if (id == this._userID) return
+    this._userID = id
+    this._userName = ''
     this._conversations = []
     this._prevConversationCursor = undefined
     this._latestConversationId = 0
     this._isLoading = false
     this._isLoadingPrev = false
-    this._isChating = false
+    this._isThinking = false
   }
 
   private addConversation(conversation: Conversation) {
@@ -134,17 +141,14 @@ class AssistantStore {
     const now_ms = Date.now()
     const conversation = res.output.result!
     this.addConversation(conversation)
-    if (
-      conversation.status != 'submitted' ||
-      now_ms - conversation.updated_at > 600000
-    ) {
-      this._isChating = false
+    if (this._isThinking) {
+      this._isThinking = isThinking(conversation)
     }
 
     if (
       (conversation.status == 'submitted' ||
         conversation.status == 'working') &&
-      now_ms - conversation.updated_at < 3600000
+      now_ms - conversation.updated_at < 1200000
     ) {
       sleep(Math.min(interval, max_interval)).then(() => {
         this.fetchConversation(_id, Math.floor(interval * 1.2), max_interval)
@@ -259,12 +263,15 @@ class AssistantStore {
     const prompt = content.trim()
     if (!prompt) return
 
-    this._isChating = true
+    this._isThinking = true
     try {
       const res = await agent_run({
         name: 'assistant',
         prompt,
-        resources
+        resources,
+        meta: {
+          user: this._userName || undefined
+        }
       })
 
       if (res.conversation) {
@@ -275,7 +282,7 @@ class AssistantStore {
         throw res.failed_reason
       }
     } catch (error) {
-      this._isChating = false
+      this._isThinking = false
       console.error('AssistantStore.chat', error, content, resources)
       throw error
     }

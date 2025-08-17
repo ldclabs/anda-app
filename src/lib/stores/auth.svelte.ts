@@ -71,6 +71,7 @@ export async function logout() {
 export async function get_user() {
   let user: UserInfo = await invoke('get_user')
   authStore.user = user
+  assistantStore.userName = user.name
   return user
 }
 
@@ -82,12 +83,12 @@ async function init() {
   listen<IdentityInfo>(IDENTITY_EVENT, (event) => {
     authStore.auth = new AuthInfo(event.payload)
     authStore.user = null
+
+    assistantStore.userID = authStore.auth.id
     if (authStore.auth.isAuthenticated()) {
       authStore.isSigningIn = false
       get_user()
     }
-
-    assistantStore.reset_if_user_changed(authStore.auth.id)
   })
 
   const res: IdentityInfo = await invoke('identity')

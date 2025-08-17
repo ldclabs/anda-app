@@ -2,8 +2,10 @@
   "bundle": {
     "macOS": {
       "entitlements": "./Entitlements.plist",
+      "signingIdentity": "Developer ID Application: LDC Labs Limited (S9Z2WAMAV8)",
+      "providerShortName": "Anda",
       "files": {
-        "embedded.provisionprofile": "~/develop/Anda_AI_dev.provisionprofile"
+        "embedded.provisionprofile": "~/develop/Anda_AI.provisionprofile"
       }
     }
   }

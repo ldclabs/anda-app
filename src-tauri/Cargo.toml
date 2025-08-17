@@ -1,6 +1,6 @@
 [package]
 name = "Anda_AI"
-version = "0.1.0"
+version = "0.2.0"
 description = "Anda AI Assistant"
 authors = ["LDC Labs"]
 edition = "2024"

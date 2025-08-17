@@ -66,24 +66,41 @@ export function toChatMessages(conversation: Conversation): ChatMessage[] {
   for (let i = 0; i < conversation.messages.length; i++) {
     const message = conversation.messages[i]
     if (
-      !message.content ||
-      message.name == '$system' ||
-      (message.role != 'user' && message.role != 'assistant')
+      message.content &&
+      message.name != '$system' &&
+      (message.role == 'user' || message.role == 'assistant')
     ) {
-      continue
+      res.push({
+        id: `${conversation._id}:${i}`,
+        content:
+          typeof message.content === 'string'
+            ? message.content
+            : JSON.stringify(message.content), // TODO
+        role: message.role,
+        timestamp: message.timestamp || conversation.created_at
+      })
     }
-
-    res.push({
-      id: `${conversation._id}:${i}`,
-      content:
-        typeof message.content === 'string'
-          ? message.content
-          : JSON.stringify(message.content), // TODO
-      role: message.role,
-      timestamp: message.timestamp || conversation.created_at
-    })
   }
   return res
+}
+
+export function isThinking(conversation: Conversation): boolean {
+  if (conversation.status != 'submitted' && conversation.status != 'working') {
+    return false
+  }
+  if (Date.now() - conversation.updated_at > 60 * 1000) {
+    return false
+  }
+  // for (const message of conversation.messages.slice(1)) {
+  //   if (
+  //     message.content &&
+  //     message.name != '$system' &&
+  //     (message.role == 'user' || message.role == 'assistant')
+  //   ) {
+  //     return true
+  //   }
+  // }
+  return true
 }
 
 export interface KIPLogs {

@@ -77,6 +77,10 @@ impl<R: Runtime> ICPClient<R> {
             .build()
     }
 
+    pub fn agent(&self) -> &Agent {
+        &self.agent
+    }
+
     pub fn identity(&self) -> Arc<AtomicIdentity> {
         self.identity.clone()
     }

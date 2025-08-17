@@ -16,6 +16,7 @@ use anda_object_store::EncryptedStoreBuilder;
 use anda_web3_client::client::Client as Web3Client;
 use arc_swap::ArcSwap;
 use futures::try_join;
+use ic_agent::Agent;
 use ic_auth_types::ByteBufB64;
 use ic_auth_verifier::{AtomicIdentity, sha3_256};
 use parking_lot::RwLock;
@@ -27,11 +28,13 @@ use std::{
         Arc,
         atomic::{AtomicU64, Ordering},
     },
+    time::Duration,
 };
 use tauri::{
     AppHandle, Emitter, Manager, Runtime, async_runtime,
     plugin::{Builder, TauriPlugin},
 };
+use tokio_util::sync::CancellationToken;
 
 use crate::{AppStateCell, SecretStateCell, model::app::AssistantConfig};
 
@@ -48,10 +51,10 @@ pub struct AndaAssistant<R: Runtime> {
 struct InnerAssistant {
     dir: PathBuf,
     db: RwLock<Option<Arc<AndaDB>>>,
-    web3: RwLock<Option<Arc<Web3Client>>>,
     assistant: RwLock<Option<Arc<Assistant>>>,
     engine: ArcSwap<Engine>,
     should_restart: Arc<AtomicU64>,
+    cancel_token: CancellationToken,
 }
 
 impl<R: Runtime> AndaAssistant<R> {
@@ -77,10 +80,10 @@ impl<R: Runtime> AndaAssistant<R> {
                     inner: Arc::new(InnerAssistant {
                         dir,
                         db: RwLock::new(None),
-                        web3: RwLock::new(None),
                         assistant: RwLock::new(None),
                         engine: ArcSwap::new(Arc::new(InnerAssistant::builder().empty())),
                         should_restart: Arc::new(AtomicU64::new(0)),
+                        cancel_token: CancellationToken::new(),
                     }),
                 });
 
@@ -132,6 +135,7 @@ impl<R: Runtime> AndaAssistant<R> {
 
     #[allow(dead_code)]
     pub fn close(&self) {
+        self.inner.cancel_token.cancel();
         let engine = self.inner.engine.load().clone();
         let db = self.inner.db.read().clone();
         async_runtime::block_on(async move {
@@ -164,26 +168,26 @@ impl InnerAssistant {
     async fn connect(
         &self,
         identity: Arc<AtomicIdentity>,
+        agent: Agent,
         cfg: AssistantConfig,
         https_proxy: Option<String>,
     ) -> Result<bool, BoxError> {
-        // ic_agent::Agent 的 HealthCheckActor 存在后台 loop 任务，无法主动停止
-        // 直接替换 Agent 会导致 panic，从而只能复用 web3 client
-        let web3 = self.web3.read().clone();
-        let web3 = if let Some(web3) = web3 {
-            web3
-        } else {
-            let web3 = Web3Client::builder()
-                .with_ic_host(ICP_HOST)
-                .with_identity(identity)
-                .with_root_secret(**cfg.root_secret)
-                .build()
-                .await?;
+        let mut http_client = request_client_builder();
+        if let Some(proxy) = https_proxy {
+            http_client = http_client.proxy(Proxy::all(proxy)?);
+        }
+        let http_client = http_client.build()?;
 
-            let web3 = Arc::new(web3);
-            *self.web3.write() = Some(web3.clone());
-            web3
-        };
+        let web3 = Web3Client::builder()
+            .with_ic_host(ICP_HOST)
+            .with_identity(identity)
+            .with_agent(agent)
+            .with_http_client(http_client.clone())
+            .with_root_secret(**cfg.root_secret)
+            .build()
+            .await?;
+
+        let web3 = Arc::new(web3);
 
         let my_principal = web3.get_principal();
         log::info!(
@@ -224,8 +228,17 @@ impl InnerAssistant {
             };
 
             let db = AndaDB::connect(object_store.clone(), db_config).await?;
+
             let db = Arc::new(db);
             *self.db.write() = Some(db.clone());
+
+            let db_ = db.clone();
+            let cancel_token = self.cancel_token.child_token();
+            tokio::spawn(async move {
+                db_.auto_flush(cancel_token, Duration::from_millis(60 * 1000))
+                    .await;
+            });
+
             db
         };
 
@@ -254,31 +267,26 @@ impl InnerAssistant {
             .register_agent(assistant)?
             .export_tools(vec![MemoryTool::NAME.to_string()]);
 
-        let mut http_client = request_client_builder();
-        if let Some(proxy) = https_proxy {
-            http_client = http_client.proxy(Proxy::all(proxy)?);
-        }
-
         if let Some((name, provider)) = cfg.get_provider() {
             let model = match name {
                 "gemini" => Model::with_completer(Arc::new(
                     gemini::Client::new(&provider.api_key, provider.api_base.clone())
-                        .with_client(http_client.build()?)
+                        .with_client(http_client)
                         .completion_model(&provider.model),
                 )),
                 "deepseek" => Model::with_completer(Arc::new(
                     deepseek::Client::new(&provider.api_key, provider.api_base.clone())
-                        .with_client(http_client.build()?)
+                        .with_client(http_client)
                         .completion_model(&provider.model),
                 )),
                 "xai" => Model::with_completer(Arc::new(
                     xai::Client::new(&provider.api_key, provider.api_base.clone())
-                        .with_client(http_client.build()?)
+                        .with_client(http_client)
                         .completion_model(&provider.model),
                 )),
                 "openai" => Model::with_completer(Arc::new(
                     openai::Client::new(&provider.api_key, provider.api_base.clone())
-                        .with_client(http_client.build()?)
+                        .with_client(http_client)
                         .completion_model(&provider.model),
                 )),
                 _ => return Err(format!("Unknown model provider: {}", name).into()),
@@ -325,10 +333,11 @@ impl<R: Runtime, T: Manager<R>> AndaAssistantExt<R> for T {
             .with(|state| state.settings.https_proxy.clone());
         let assistant = self.assistant().inner.clone();
         let identity = self.icp().identity();
+        let agent = self.icp().agent().clone();
 
         let app = self.app_handle().clone();
         async_runtime::spawn(async move {
-            match assistant.connect(identity, cfg, proxy).await {
+            match assistant.connect(identity, agent, cfg, proxy).await {
                 Ok(is_ready) => {
                     let _ = app.emit(ASSISTANT_EVENT, is_ready);
                 }

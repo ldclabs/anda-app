@@ -94,9 +94,8 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
                 if let Some(window) = app.get_webview_window("settings") {
                     let _ = window.show();
                     let _ = window.set_focus();
-                } else if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
+                } else {
+                    let _ = reopen_window(app, "main", None);
                 }
             }
         })

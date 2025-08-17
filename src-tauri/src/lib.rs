@@ -206,7 +206,7 @@ pub fn run() {
                         // https://tauri.app/v1/guides/features/system-tray/#preventing-the-app-from-closing
                         log::info!("Close requested event received");
                         api.prevent_close();
-                        window.hide().unwrap();
+                        let _ = window.hide();
                         window.app_handle().save_assistant();
                     }
                 }
