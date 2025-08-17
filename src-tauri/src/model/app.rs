@@ -115,46 +115,34 @@ pub struct AssistantConfig {
 impl AssistantConfig {
     pub fn get_provider(&self) -> Option<(&str, &ModelProvider)> {
         match self.preferred_provider.as_str() {
-            "gemini" => self
-                .gemini
-                .as_ref()
-                .and_then(|p| {
-                    if p.api_key.is_empty() {
-                        None
-                    } else {
-                        Some(("gemini", p))
-                    }
-                }),
-            "deepseek" => self
-                .deepseek
-                .as_ref()
-                .and_then(|p| {
-                    if p.api_key.is_empty() {
-                        None
-                    } else {
-                        Some(("deepseek", p))
-                    }
-                }),
-            "xai" => self
-                .xai
-                .as_ref()
-                .and_then(|p| {
-                    if p.api_key.is_empty() {
-                        None
-                    } else {
-                        Some(("xai", p))
-                    }
-                }),
-            "openai" => self
-                .openai
-                .as_ref()
-                .and_then(|p| {
-                    if p.api_key.is_empty() {
-                        None
-                    } else {
-                        Some(("openai", p))
-                    }
-                }),
+            "gemini" => self.gemini.as_ref().and_then(|p| {
+                if p.api_key.is_empty() {
+                    None
+                } else {
+                    Some(("gemini", p))
+                }
+            }),
+            "deepseek" => self.deepseek.as_ref().and_then(|p| {
+                if p.api_key.is_empty() {
+                    None
+                } else {
+                    Some(("deepseek", p))
+                }
+            }),
+            "xai" => self.xai.as_ref().and_then(|p| {
+                if p.api_key.is_empty() {
+                    None
+                } else {
+                    Some(("xai", p))
+                }
+            }),
+            "openai" => self.openai.as_ref().and_then(|p| {
+                if p.api_key.is_empty() {
+                    None
+                } else {
+                    Some(("openai", p))
+                }
+            }),
             _ => None,
         }
     }
