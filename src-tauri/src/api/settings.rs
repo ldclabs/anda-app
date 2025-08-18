@@ -5,17 +5,11 @@ use tauri::{AppHandle, Emitter, Manager, Theme};
 use super::Result;
 use crate::{
     AppStateCell, BoxError, SecretStateCell, model::app::Settings,
-    service::assistant::AndaAssistantExt, tray::reopen_window,
+    service::assistant::AndaAssistantExt,
 };
 
 pub const SETTINGS_EVENT: &str = "SettingsChanged";
 pub const SECRET_SETTINGS_EVENT: &str = "SecretSettingsChanged";
-
-#[tauri::command]
-pub async fn open_settings_window(app: AppHandle, params: Option<String>) -> Result<()> {
-    reopen_window(&app, "settings", params.as_deref())?;
-    Ok(())
-}
 
 #[tauri::command]
 pub async fn get_settings(app: AppHandle) -> Result<Settings> {

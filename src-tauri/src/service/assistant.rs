@@ -12,7 +12,7 @@ use anda_engine::{
     model::{Model, Proxy, deepseek, gemini, openai, request_client_builder, xai},
     store::{LocalFileSystem, Store},
 };
-use anda_object_store::EncryptedStoreBuilder;
+use anda_object_store::MetaStoreBuilder;
 use anda_web3_client::client::Client as Web3Client;
 use arc_swap::ArcSwap;
 use futures::try_join;
@@ -205,10 +205,7 @@ impl InnerAssistant {
 
             let lock = sha3_256(&os_secret);
             let object_store = LocalFileSystem::new_with_prefix(&self.dir)?;
-            let object_store = EncryptedStoreBuilder::with_secret(object_store, 10000, os_secret)
-                .with_chunk_size(1024 * 1024)
-                .with_conditional_put()
-                .build();
+            let object_store = MetaStoreBuilder::new(object_store, 10000).build();
             let object_store = Arc::new(object_store);
 
             let db_config = DBConfig {

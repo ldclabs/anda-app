@@ -233,3 +233,19 @@ export function elementsInViewport(
 
   return rt
 }
+
+export function scrollIntoView(
+  messageId: string,
+  behavior: ScrollBehavior = 'instant',
+  block: ScrollLogicalPosition = 'center'
+): void {
+  const ele = document.getElementById(messageId)
+
+  if (ele) {
+    console.log(messageId, ele)
+    ele.scrollIntoView({
+      block,
+      behavior
+    })
+  }
+}

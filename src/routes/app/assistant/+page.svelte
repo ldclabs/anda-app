@@ -6,7 +6,7 @@
   import { t } from '$lib/stores/i18n'
   import { open_settings_window } from '$lib/stores/settings.svelte'
   import { renderMarkdown } from '$lib/utils/markdown'
-  import { scrollOnHooks } from '$lib/utils/window'
+  import { scrollIntoView, scrollOnHooks } from '$lib/utils/window'
   import { Spinner } from 'flowbite-svelte'
   import {
     CogOutline,
@@ -29,21 +29,6 @@
       scrollIntoView(`conversation-${latestConversationId}`, 'smooth', 'start')
     }
   })
-
-  function scrollIntoView(
-    messageId: string,
-    behavior: ScrollBehavior = 'instant',
-    block: ScrollLogicalPosition = 'center'
-  ): void {
-    const ele = document.getElementById(messageId)
-
-    if (ele) {
-      ele.scrollIntoView({
-        block,
-        behavior
-      })
-    }
-  }
 
   onMount(() => {
     assistant_name().then((name) => {
@@ -133,7 +118,7 @@
           </p>
           <button
             class="text-primary-600 flex items-center rounded-sm p-2 text-base font-normal hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-            onclick={() => open_settings_window('?section=ai')}
+            onclick={() => open_settings_window()}
             ><CogOutline size="lg" />
             <span class="ms-2">{t('settings.title')}</span>
           </button>

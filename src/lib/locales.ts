@@ -156,6 +156,14 @@ export const translations: Record<string, Record<string, string>> = {
   },
 
   // App
+  'app.restart_update': {
+    en: 'Restart to update',
+    zh: '重启并更新'
+  },
+  'app.download_update': {
+    en: 'Downloading %{version}',
+    zh: '下载 %{version}'
+  },
   'app.sign_in': {
     en: 'Sign In',
     zh: '登录'
@@ -211,7 +219,7 @@ export const translations: Record<string, Record<string, string>> = {
     zh: '为我命名，开启进化之旅'
   },
   'assistant.hello.description': {
-    en: '---\n\nI am an AI companion that evolves with you.\n\n● **Shared Growth**\nForged by [KIP](https://github.com/ldclabs/KIP), my unique identity will be shaped by our conversations.\n\n● **Our Memories**\nLocally encrypted, our memories are ours alone.\n\n● **Web3 Identity**\nWith [ICP](https://internetcomputer.org/) authentication, we can access the new Agentic Network.',
-    zh: '---\n\n我是一个为你而生的进化型 AI 伙伴。\n\n● **共同成长**\n基于 [KIP](https://github.com/ldclabs/KIP) 构建，我们的会话将塑造独一无二的我。\n\n● **专属记忆**\n对话本地加密，我们的记忆只属于我们。\n\n● **Web3 身份**\n使用 [ICP](https://internetcomputer.org/) 身份验证，进入全新的智能体网络。'
+    en: '---\n\nI am an AI companion that evolves with you.\n\n● **Shared Growth**\nForged by [KIP](https://github.com/ldclabs/KIP), my unique identity will be shaped by our conversations.\n\n● **Web3 Identity**\nWith [ICP](https://internetcomputer.org/) authentication, we can access the new Agentic Network.',
+    zh: '---\n\n我是一个为你而生的进化型 AI 伙伴。\n\n● **共同成长**\n基于 [KIP](https://github.com/ldclabs/KIP) 构建，我们的会话将塑造独一无二的我。\n\n● **Web3 身份**\n使用 [ICP](https://internetcomputer.org/) 身份验证，进入全新的智能体网络。'
   }
 }

@@ -4,9 +4,9 @@ use tauri_plugin_deep_link::DeepLinkExt;
 mod api;
 mod deeplink;
 mod logging;
+mod menu;
 mod model;
 mod service;
-mod tray;
 mod utils;
 
 use deeplink::{DeepLinkService, DeepLinkServiceExt};
@@ -56,11 +56,6 @@ pub fn run() {
             tauri_plugin_log::Builder::new()
                 .level(log::LevelFilter::Info)
                 .format(logging::formatter)
-                .target(tauri_plugin_log::Target::new(
-                    tauri_plugin_log::TargetKind::LogDir {
-                        file_name: Some("logs".to_string()),
-                    },
-                ))
                 .max_file_size(1024 * 1024 * 10)
                 .build(),
         )
@@ -90,7 +85,6 @@ pub fn run() {
             api::settings::set_setting,
             api::settings::get_secret_setting,
             api::settings::set_secret_setting,
-            api::settings::open_settings_window,
             api::updater::quit,
             api::updater::restart,
             api::updater::check_update,
@@ -184,8 +178,8 @@ pub fn run() {
                 }
 
                 app.manage(api::updater::Updater::default());
-
-                tray::create_tray(app.handle())?;
+                menu::setup_app_menu(app.handle())?;
+                menu::setup_app_tray(app.handle())?;
             }
 
             let dls = app.deep_link_service_owned();
@@ -224,7 +218,7 @@ pub fn run() {
         .build(ctx)
         .expect("error while running tauri application");
 
-    app.run(|_app, event| match event {
+    app.run(|app, event| match event {
         #[cfg(target_os = "macos")]
         tauri::RunEvent::Reopen {
             has_visible_windows,
@@ -234,7 +228,8 @@ pub fn run() {
                 "Reopen event received: has_visible_windows = {}",
                 has_visible_windows
             );
-            if has_visible_windows {}
+            // 点击 Dock 图标时，显示并聚焦主窗口
+            let _ = menu::reopen_window(app, "main", None);
         }
         tauri::RunEvent::ExitRequested { code, .. } => {
             log::info!("Exit requested event received: code = {code:?}");

@@ -1,9 +1,9 @@
 _version: 2
 menu.open_main:
-  en: Open Anda AI
-  zh: 打开 Anda AI
+  en: Show Anda AI
+  zh: 显示 Anda AI
 menu.follow_us:
-  en: Follow Us
+  en: Follow Us on X
   zh: 关注我们
 menu.version:
   en: Version %{version}
@@ -11,6 +11,18 @@ menu.version:
 menu.about:
   en: About Anda AI
   zh: 关于 Anda AI
+menu.services:
+  en: Services
+  zh: 服务
+menu.hide_app:
+  en: Hide Anda AI
+  zh: 隐藏 Anda AI
+menu.hide_others:
+  en: Hide Others
+  zh: 隐藏其它
+menu.show_all:
+  en: Show All
+  zh: 显示全部
 menu.check_update:
   en: Check Update
   zh: 检查更新
@@ -18,5 +30,5 @@ menu.settings:
   en: Settings...
   zh: 设置...
 menu.quit:
-  en: Quit
-  zh: 退出
+  en: Quit Anda AI
+  zh: 退出 Anda AI

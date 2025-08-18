@@ -46,11 +46,20 @@ async function agent_run<I, O>(input: AgentInput): Promise<AgentOutput> {
 
 class AssistantStore {
   static async init() {
-    const info = await assistant_info()
-    assistantStore._isReady = info.agents.length > 0
     listen<boolean>(ASSISTANT_EVENT, (event) => {
       assistantStore._isReady = event.payload
     })
+
+    const checkReady = async () => {
+      const info = await assistant_info()
+      assistantStore._isReady = info.agents.length > 0
+
+      if (!assistantStore._isReady) {
+        setTimeout(checkReady, 1000)
+      }
+    }
+
+    checkReady()
   }
 
   private _conversations = $state<Conversation[]>([])
@@ -85,6 +94,10 @@ class AssistantStore {
 
   get latestConversationId() {
     return this._latestConversationId
+  }
+
+  get prevConversationCursor() {
+    return this._prevConversationCursor
   }
 
   set userName(name: string) {
@@ -132,7 +145,6 @@ class AssistantStore {
       } as MemoryToolArgs
     })
 
-    console.log('GetConversation', res)
     if (res.output.error) {
       console.error('GetConversation', res.output.error)
       throw res.output.error
@@ -166,7 +178,6 @@ class AssistantStore {
       } as MemoryToolArgs
     })
 
-    console.log('ListKipLogs', res)
     if (res.output.error) {
       console.error('ListKipLogs', res.output.error)
       throw res.output.error
@@ -193,8 +204,8 @@ class AssistantStore {
           })
         ])
 
-      console.log('loadPreviousConversations', res)
       if (res.output.error) {
+        console.error('loadPreviousConversations', res.output.error)
         throw res.output.error
       }
 
@@ -226,8 +237,8 @@ class AssistantStore {
         } as MemoryToolArgs
       })
 
-      console.log('loadLatestConversations', res)
       if (res.output.error) {
+        console.error('loadLatestConversations', res.output.error)
         throw res.output.error
       }
 

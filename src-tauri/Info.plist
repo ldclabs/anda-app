@@ -5,7 +5,7 @@
 	<key>CFBundleIdentifier</key>
 	<string>ai.anda.app</string>
 	<key>CFBundleExecutable</key>
-    <string>anda</string>
+    <string>anda_ai</string>
 	<key>NSPrefPaneIconLabel</key>
 	<string>Anda AI</string>
 

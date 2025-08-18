@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 
 export interface Settings {
   locale: string
@@ -71,9 +72,15 @@ export async function set_secret_setting(
   }
 }
 
-export function open_settings_window(params?: string) {
-  invoke('open_settings_window', {
-    params
+export function open_settings_window() {
+  const webview = new WebviewWindow('settings', {
+    url: '/settings?section=ai',
+    width: 1024,
+    height: 800
+  })
+  webview.once('tauri://error', function (e) {
+    // an error happened creating the webview
+    console.error('an error happened creating the webview', e)
   })
 }
 

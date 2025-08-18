@@ -3,6 +3,7 @@
   import DiagnosisModal from '$lib/components/diagnosis/DiagnosisModal.svelte'
   import { authStore, get_user, signIn } from '$lib/stores/auth.svelte'
   import { t } from '$lib/stores/i18n'
+  import { updaterStore } from '$lib/stores/updater.svelte'
   import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri.mock'
   import { type as osType } from '@tauri-apps/plugin-os'
   import {
@@ -13,7 +14,11 @@
     SidebarItem,
     Spinner
   } from 'flowbite-svelte'
-  import { UserCircleOutline, UserHeadsetOutline } from 'flowbite-svelte-icons'
+  import {
+    RefreshOutline,
+    UserCircleOutline,
+    UserHeadsetOutline
+  } from 'flowbite-svelte-icons'
   import { setContext } from 'svelte'
 
   // Safe OS type detection
@@ -46,13 +51,13 @@
         outerClass="relative anda-nav"
         activeClass="font-bold text-green-500 hover:text-green-900 dark:hover:text-green-700 dark:text-green-300"
       >
-        <BottomNavItem btnName={t('assistant.title')} href="/assistant">
+        <BottomNavItem btnName={t('assistant.title')} href="/app/assistant">
           <UserHeadsetOutline size="lg" />
         </BottomNavItem>
-        <!-- <BottomNavItem btnName="Discover" href="/discover">
+        <!-- <BottomNavItem btnName="Discover" href="/app/discover">
           <SearchOutline size="lg" />
         </BottomNavItem> -->
-        <!-- <BottomNavItem btnName="Messages" href="/messages">
+        <!-- <BottomNavItem btnName="Messages" href="/app/messages">
           <MessagesOutline size="lg" />
         </BottomNavItem> -->
         {#if authStore.auth.isAuthenticated()}
@@ -98,17 +103,17 @@
         nonActiveClass="p-2"
       >
         <SidebarGroup>
-          <SidebarItem label={t('assistant.title')} href="/assistant">
+          <SidebarItem label={t('assistant.title')} href="/app/assistant">
             {#snippet icon()}
               <UserHeadsetOutline size="lg" />
             {/snippet}
           </SidebarItem>
-          <!-- <SidebarItem label="Discover" href="/discover">
+          <!-- <SidebarItem label="Discover" href="/app/discover">
             {#snippet icon()}
               <SearchOutline size="lg" />
             {/snippet}
           </SidebarItem> -->
-          <!-- <SidebarItem label="Messages" href="/messages">
+          <!-- <SidebarItem label="Messages" href="/app/messages">
             {#snippet icon()}
               <MessagesOutline size="lg" />
             {/snippet}
@@ -126,7 +131,7 @@
                 {/snippet}
               </SidebarItem>
             {:then userInfo}
-              <SidebarItem label={userInfo.name} href="/profile">
+              <SidebarItem label={userInfo.name} href="/app/profile">
                 {#snippet icon()}
                   {#if userInfo.image}
                     <img
@@ -151,6 +156,30 @@
                 {#if authStore.isSigningIn}
                   <Spinner class="ms-3 inline-flex" size="4" />
                 {/if}
+              </button>
+            </li>
+          {/if}
+          {#if updaterStore.info}
+            <li>
+              <button
+                class="flex w-full items-center rounded-sm p-2 text-base font-normal hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700 {updaterStore.isDownloading
+                  ? 'cursor-not-allowed text-gray-500'
+                  : ''}"
+                onclick={() => updaterStore.restartApp()}
+                disabled={updaterStore.isDownloading ||
+                  updaterStore.isRestarting}
+                ><RefreshOutline
+                  size="lg"
+                  color="red"
+                  class={updaterStore.isDownloading ? 'animate-spin' : ''}
+                />
+                <span class="ms-3"
+                  >{updaterStore.isDownloading
+                    ? t('app.download_update', {
+                        version: updaterStore.info?.version
+                      })
+                    : t('app.restart_update')}</span
+                >
               </button>
             </li>
           {/if}
