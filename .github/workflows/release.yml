@@ -32,14 +32,12 @@ jobs:
         shell: bash
         id: get-version
         run: |
-          PACKAGE_VERSION=$(jq -r '.version' package.json)
-          CARGO_VERSION=$(grep -m 1 '^version =' src-tauri/Cargo.toml | sed -E 's/.*"([^"]+)".*/\1/')
-          if [ "$PACKAGE_VERSION" != "$CARGO_VERSION" ]; then
-            echo "::error::Version mismatch!"
-          else
-            echo "Version match: $PACKAGE_VERSION"
+          TAG="${GITHUB_REF#refs/*/}"
+          if [[ "$TAG" != v* ]]; then
+            echo "::error::Tag must start with v (e.g. v1.2.3), got: $TAG"
+            exit 1
           fi
-          echo "APP_VERSION=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+          echo "APP_VERSION=$TAG" >> $GITHUB_OUTPUT
 
       - name: Generate changelog
         id: get-changelog
@@ -136,6 +134,7 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
+          appVersion: ${{ env.APP_VERSION }}
           tagName: ${{ github.ref_name }}
           releaseName: Anda AI App ${{ env.APP_VERSION }}
           releaseBody: '${{ needs.create-release.outputs.RELEASE_BODY }}'
