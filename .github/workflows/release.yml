@@ -134,7 +134,7 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
-          appVersion: ${{ env.APP_VERSION }}
+          # appVersion: ${{ env.APP_VERSION }} // not work
           tagName: ${{ github.ref_name }}
           releaseName: Anda AI App ${{ env.APP_VERSION }}
           releaseBody: '${{ needs.create-release.outputs.RELEASE_BODY }}'
