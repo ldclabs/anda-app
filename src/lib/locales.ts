@@ -168,6 +168,18 @@ export const translations: Record<string, Record<string, string>> = {
     en: 'Sign In',
     zh: '登录'
   },
+  'app.sign_in_fallback.title': {
+    en: 'Sign In by authentication URL',
+    zh: '通过身份验证 URL 登录'
+  },
+  'app.sign_in_fallback.by_url': {
+    en: 'Sign In by URL',
+    zh: '通过 URL 登录'
+  },
+  'app.sign_in_fallback.again': {
+    en: 'Sign In Again',
+    zh: '重新登录'
+  },
   'app.log_out': {
     en: 'Logout',
     zh: '退出登录'

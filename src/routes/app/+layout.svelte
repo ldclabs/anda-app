@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state'
   import DiagnosisModal from '$lib/components/diagnosis/DiagnosisModal.svelte'
-  import { authStore, get_user, signIn } from '$lib/stores/auth.svelte'
+  import { authStore, signIn, signInByUrl } from '$lib/stores/auth.svelte'
   import { t } from '$lib/stores/i18n'
   import { updaterStore } from '$lib/stores/updater.svelte'
   import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri.mock'
@@ -9,12 +9,17 @@
   import {
     BottomNav,
     BottomNavItem,
+    Button,
+    Input,
+    Label,
+    Modal,
     Sidebar,
     SidebarGroup,
     SidebarItem,
     Spinner
   } from 'flowbite-svelte'
   import {
+    QuestionCircleOutline,
     RefreshOutline,
     UserCircleOutline,
     UserHeadsetOutline
@@ -27,18 +32,70 @@
     open: (view: 'kip' | 'conversation') => {}
   })
 
-  setContext('diagnosisModalState', diagnosisModalState)
+  let signInModal = $state(false)
 
   let { children } = $props()
   let isMobile = $state(ot === 'ios' || ot === 'android')
   let activeUrl = $state(page.url.pathname)
 
+  function onSignInClick() {
+    if (authStore.signInFallback) {
+      signInModal = true
+      return
+    }
+    signIn()
+  }
+
+  function onSignInAction({
+    action,
+    data
+  }: {
+    action: string
+    data: FormData
+  }) {
+    const signInUrl = data.get('signInUrl') as string
+    data.delete('signInUrl')
+    signInByUrl(signInUrl)
+  }
+
+  setContext('diagnosisModalState', diagnosisModalState)
+  setContext('signInHandler', onSignInClick)
   $effect(() => {
     activeUrl = page.url.pathname
   })
 </script>
 
 {#key authStore.auth.id}
+  <Modal form bind:open={signInModal} size="xs" onaction={onSignInAction}>
+    <div class="flex flex-col space-y-6">
+      <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white"
+        >{t('app.sign_in_fallback.title')}</h3
+      >
+      <Label class="space-y-2">
+        <Input
+          type="text"
+          name="signInUrl"
+          placeholder="https://anda.ai/deeplink/?os=xx&action=SignIn..."
+          required
+        />
+      </Label>
+      <Button type="submit" value="sign_in"
+        >{t('app.sign_in_fallback.by_url')}</Button
+      >
+      <Button
+        color="alternative"
+        disabled={authStore.isSigningIn}
+        onclick={() => {
+          signIn()
+          signInModal = false
+        }}
+        ><span>{t('app.sign_in_fallback.again')}</span
+        >{#if authStore.isSigningIn}
+          <Spinner class="ms-3 inline-flex" size="4" />
+        {/if}</Button
+      >
+    </div>
+  </Modal>
   {#if isMobile}
     <main class="relative grid h-dvh w-dvw grid-rows-[1fr_auto]">
       <div class="relative w-full overflow-auto">
@@ -60,31 +117,22 @@
         <!-- <BottomNavItem btnName="Messages" href="/app/messages">
           <MessagesOutline size="lg" />
         </BottomNavItem> -->
-        {#if authStore.auth.isAuthenticated()}
-          {#await get_user()}
-            <BottomNavItem btnName={t('app.sign_in')} href="#">
-              <UserCircleOutline
-                size="lg"
-                class={authStore.isSigningIn ? 'animate-bounce' : ''}
+        {#if authStore.user}
+          <BottomNavItem btnName={authStore.user.name} href="#">
+            {#if authStore.user.image}
+              <img
+                src={authStore.user.image}
+                alt={authStore.user.name + 'image'}
+                class="size-6 rounded-full"
               />
-            </BottomNavItem>
-          {:then userInfo}
-            <BottomNavItem btnName={userInfo.name} href="#">
-              {#if userInfo.image}
-                <img
-                  src={userInfo.image}
-                  alt={userInfo.name + 'image'}
-                  class="size-6 rounded-full"
-                />
-              {:else}
-                <UserCircleOutline size="lg" />
-              {/if}
-            </BottomNavItem>
-          {/await}
+            {:else}
+              <UserCircleOutline size="xl" />
+            {/if}
+          </BottomNavItem>
         {:else}
           <BottomNavItem btnName={t('app.sign_in')} onclick={signIn}>
             <UserCircleOutline
-              size="lg"
+              size="xl"
               class={authStore.isSigningIn ? 'animate-bounce' : ''}
             />
           </BottomNavItem>
@@ -120,41 +168,32 @@
           </SidebarItem> -->
         </SidebarGroup>
         <SidebarGroup border>
-          {#if authStore.auth.isAuthenticated()}
-            {#await get_user()}
-              <SidebarItem label={t('app.sign_in')} href="#">
-                {#snippet icon()}
-                  <UserCircleOutline size="lg" />
-                {/snippet}
-                {#snippet subtext()}
-                  <Spinner class="ms-3 inline-flex" size="4" />
-                {/snippet}
-              </SidebarItem>
-            {:then userInfo}
-              <SidebarItem label={userInfo.name} href="/app/profile">
-                {#snippet icon()}
-                  {#if userInfo.image}
-                    <img
-                      src={userInfo.image}
-                      alt={userInfo.name + 'image'}
-                      class="size-6 rounded-full"
-                    />
-                  {:else}
-                    <UserCircleOutline size="lg" />
-                  {/if}
-                {/snippet}
-              </SidebarItem>
-            {/await}
+          {#if authStore.user}
+            <SidebarItem label={authStore.user.name} href="/app/profile">
+              {#snippet icon()}
+                {#if authStore.user!.image}
+                  <img
+                    src={authStore.user!.image}
+                    alt={authStore.user!.name + 'image'}
+                    class="size-8 rounded-full"
+                  />
+                {:else}
+                  <UserCircleOutline size="xl" />
+                {/if}
+              {/snippet}
+            </SidebarItem>
           {:else}
             <li>
               <button
-                class="flex w-full items-center rounded-sm p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-                onclick={signIn}
+                class="flex w-full items-center rounded-sm p-2 text-base font-normal text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed dark:text-white dark:hover:bg-gray-700"
+                onclick={onSignInClick}
                 disabled={authStore.isSigningIn}
-                ><UserCircleOutline size="lg" />
+                ><UserCircleOutline size="xl" />
                 <span class="ms-3">{t('app.sign_in')}</span>
                 {#if authStore.isSigningIn}
                   <Spinner class="ms-3 inline-flex" size="4" />
+                {:else if authStore.signInFallback}
+                  <QuestionCircleOutline size="md" class="ms-1" />
                 {/if}
               </button>
             </li>

@@ -2,7 +2,7 @@
   import ChatConversation from '$lib/components/chat/ChatConversation.svelte'
   import ChatInput from '$lib/components/chat/ChatInput.svelte'
   import { assistantStore, assistant_name } from '$lib/stores/assistant.svelte'
-  import { authStore, signIn } from '$lib/stores/auth.svelte'
+  import { authStore } from '$lib/stores/auth.svelte'
   import { t } from '$lib/stores/i18n'
   import { open_settings_window } from '$lib/stores/settings.svelte'
   import { renderMarkdown } from '$lib/utils/markdown'
@@ -13,7 +13,7 @@
     UserCircleOutline,
     UserHeadsetOutline
   } from 'flowbite-svelte-icons'
-  import { onMount, tick } from 'svelte'
+  import { getContext, onMount, tick } from 'svelte'
 
   let messagesContainer = $state<HTMLElement>()
   let latestConversationId = $state<number>(0)
@@ -21,6 +21,7 @@
 
   const [helloContent, _] = renderMarkdown(t('assistant.hello.description'))
   const conversations = $derived(assistantStore.conversations)
+  const onSignInClick: () => void = getContext('signInHandler')
 
   // 自动滚动到底部
   $effect(() => {
@@ -131,8 +132,8 @@
             {t('assistant.signin_required')}
           </p>
           <button
-            class="text-primary-600 flex items-center rounded-sm p-2 text-base font-normal hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-            onclick={signIn}
+            class="text-primary-600 flex items-center rounded-sm p-2 text-base font-normal hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 dark:text-white dark:hover:bg-gray-700"
+            onclick={onSignInClick}
             disabled={authStore.isSigningIn}
             ><UserCircleOutline size="lg" />
             <span class="ms-2">{t('app.sign_in')}</span>

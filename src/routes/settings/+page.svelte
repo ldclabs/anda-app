@@ -488,7 +488,7 @@
     <Toast
       dismissable={false}
       color={notification?.type === 'success' ? 'green' : 'red'}
-      class="mx-auto mt-10"
+      class="mx-auto mt-4"
       bind:toastStatus
     >
       {#snippet icon()}

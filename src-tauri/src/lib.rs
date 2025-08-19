@@ -35,20 +35,21 @@ pub fn run() {
 
     #[cfg(desktop)]
     {
+        // the single instance plugin which should always be the first plugin
         app_builder = app_builder
-        .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
-            log::info!(
-                cwd = cwd,
-                argv:serde = argv;
-                "a new app instance was opened and the deep link event was already triggered, {argv:?}, cwd: {cwd:?}");
-            // when defining deep link schemes at runtime, you must also check `argv` here
+            .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+                log::info!(
+                    cwd = cwd,
+                    argv:serde = argv;
+                    "a new app instance was opened and the deep link event was already triggered");
+                // when defining deep link schemes at runtime, you must also check `argv` here
 
-            if let Some(window) = app.get_window("main") {
-                let _ = window.show();
-                let _ = window.set_focus();
-            }
-        }));
+                if let Some(window) = app.get_window("main") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            }))
+            .plugin(tauri_plugin_updater::Builder::new().build());
     }
 
     let app = app_builder

@@ -12,10 +12,10 @@ export interface IdentityInfo {
 export interface UserInfo {
   id: string
   name: string
-  image: string
-  profile_canister: string
-  cose_canister: string | null
-  username: string | null
+  image?: string
+  profile_canister?: string
+  cose_canister?: string
+  username?: string
 }
 
 export class AuthInfo {
@@ -46,7 +46,8 @@ export class AuthInfo {
 export const authStore = $state({
   auth: new AuthInfo(),
   user: null as UserInfo | null,
-  isSigningIn: false
+  isSigningIn: false,
+  signInFallback: true
 })
 
 let prevTimer: number | null = null
@@ -56,8 +57,9 @@ export async function signIn() {
 
   prevTimer && clearTimeout(prevTimer)
   prevTimer = setTimeout(() => {
+    authStore.signInFallback = authStore.isSigningIn
     authStore.isSigningIn = false
-  }, 60000)
+  }, 10000)
 }
 
 export async function signInByUrl(url: string) {
@@ -72,23 +74,27 @@ export async function get_user() {
   let user: UserInfo = await invoke('get_user')
   authStore.user = user
   assistantStore.userName = user.name
+  localStorage.setItem(`UserInfo:${user.id}`, JSON.stringify(user))
   return user
 }
 
-async function init() {
-  if (typeof window !== 'undefined') {
-    ;(window as any).signInByUrl = signInByUrl
+async function onAuthChanged(auth: AuthInfo) {
+  authStore.auth = auth
+  authStore.user = null
+  assistantStore.userID = authStore.auth.id
+  if (authStore.auth.isAuthenticated()) {
+    authStore.isSigningIn = false
+    authStore.signInFallback = false
+    authStore.user = loadUserInfo(authStore.auth.id)
+
+    get_user()
   }
+}
 
+async function init() {
+  onAuthChanged(new AuthInfo(await invoke('identity')))
   listen<IdentityInfo>(IDENTITY_EVENT, (event) => {
-    authStore.auth = new AuthInfo(event.payload)
-    authStore.user = null
-
-    assistantStore.userID = authStore.auth.id
-    if (authStore.auth.isAuthenticated()) {
-      authStore.isSigningIn = false
-      get_user()
-    }
+    onAuthChanged(new AuthInfo(event.payload))
   })
 
   const res: IdentityInfo = await invoke('identity')
@@ -98,3 +104,16 @@ async function init() {
 init().catch((err) => {
   console.error('Failed to initialize auth store', err)
 })
+
+function loadUserInfo(id: string) {
+  try {
+    let user = localStorage.getItem(`UserInfo:${id}`)
+    if (user) {
+      return JSON.parse(user) as UserInfo
+    }
+  } catch (_) {}
+  return {
+    id,
+    name: id.replace(/-.*-/, '*')
+  }
+}

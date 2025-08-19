@@ -15,7 +15,7 @@
 
   const messageCacheKey = `MessageDraft:${user}`
 
-  let message = $state(sessionStorage.getItem(messageCacheKey) || '')
+  let message = $state(localStorage.getItem(messageCacheKey) || '')
   let textareaRef = $state() as HTMLTextAreaElement
   let submitting = $state(false)
 
@@ -24,7 +24,7 @@
     if (trimmedMessage && !disabled) {
       onSend(trimmedMessage)
       message = ''
-      sessionStorage.removeItem(messageCacheKey)
+      localStorage.removeItem(messageCacheKey)
       // Reset textarea height
       if (textareaRef) {
         textareaRef.style.height = 'auto'
@@ -58,7 +58,7 @@
   onDestroy(() => {
     message = message.trim()
     if (message) {
-      sessionStorage.setItem(messageCacheKey, message)
+      localStorage.setItem(messageCacheKey, message)
     }
   })
 </script>

@@ -4,7 +4,7 @@ use ic_auth_types::{ByteBufB64, SignedDelegationCompact};
 use ic_cose::rand_bytes;
 use ic_cose_types::to_cbor_bytes;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use std::str::FromStr;
+use std::{borrow::Cow, str::FromStr};
 use tauri::{
     AppHandle, Manager, Runtime, Url,
     plugin::{Builder, TauriPlugin},
@@ -62,9 +62,10 @@ impl DeepLinkResponse {
     pub fn from_url(url: Url) -> Result<Self> {
         let mut query_pairs = url.query_pairs();
         let payload = match url.fragment() {
-            Some(f) => Some(ByteBufB64::from_str(f)?),
-            None => None,
+            Some(f) => Some(Cow::Borrowed(f)),
+            None => query_pairs.find(|(k, _)| k == "payload").map(|(_, v)| v),
         };
+        let payload = payload.map(|v| ByteBufB64::from_str(&v)).transpose()?;
 
         Ok(DeepLinkResponse {
             os: query_pairs
@@ -189,28 +190,26 @@ impl<R: Runtime> DeepLinkService<R> {
     }
 
     pub fn on_open_url(&self, urls: Vec<Url>) {
+        log::info!(urls:serde = urls; "deeplink urls");
         for url in urls {
             let s = url.to_string();
             match DeepLinkResponse::from_url(url) {
-                Ok(res) => {
-                    log::debug!(deep_link:serde = res; "deep link response");
-                    match res.action.as_str() {
-                        "SignIn" => {
-                            if let Err(err) = self.on_sign_in(res) {
-                                log::error!(
+                Ok(res) => match res.action.as_str() {
+                    "SignIn" => {
+                        if let Err(err) = self.on_sign_in(res) {
+                            log::error!(
                                     action = "SignIn",
                                     error = format!("{err:?}");
                                     "failed to sign in with deep link");
-                            }
                         }
-                        _ => {
-                            log::warn!(
+                    }
+                    _ => {
+                        log::warn!(
                                 action = res.action,
                                 response:serde = res;
                                 "unknown deep link action");
-                        }
                     }
-                }
+                },
                 Err(err) => {
                     log::error!(
                         url = s,
