@@ -26,7 +26,7 @@ export const settingsStore = $state({
 } as Settings)
 
 export const secretSettingsStore = $state({
-  preferred_provider: 'gemini'
+  preferred_provider: 'openai'
 } as SecretSettings)
 
 export async function get_settings() {
