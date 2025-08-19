@@ -172,12 +172,6 @@ pub fn run() {
 
             #[cfg(desktop)]
             {
-                #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
-                {
-                    app.deep_link().register("anda")?;
-                    app.deep_link().register_all()?;
-                }
-
                 app.manage(api::updater::Updater::default());
                 menu::setup_app_menu(app.handle())?;
                 menu::setup_app_tray(app.handle())?;

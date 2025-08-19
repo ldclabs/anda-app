@@ -68,7 +68,8 @@
       ],
       "desktop": {
         "schemes": [
-          "anda"
+          "anda",
+          "anda-ai"
         ]
       }
     },
