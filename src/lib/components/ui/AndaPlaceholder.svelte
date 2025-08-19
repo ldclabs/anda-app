@@ -4,9 +4,13 @@
   let { children } = $props()
 </script>
 
-<div class="flex h-full w-full">
-  <div class="m-auto flex flex-col gap-4 text-center opacity-50 *:size-40">
+<div class="flex w-full">
+  <div
+    class="m-auto flex flex-col gap-4 text-center opacity-50 [&>:first-child]:size-40"
+  >
     <AndaLogo />
-    {@render children()}
+    {#if children}
+      {@render children()}
+    {/if}
   </div>
 </div>

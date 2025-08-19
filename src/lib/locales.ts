@@ -193,6 +193,20 @@ export const translations: Record<string, Record<string, string>> = {
     zh: '复制原始内容'
   },
 
+  // Profile
+  'profile.title': {
+    en: 'Profile',
+    zh: '个人信息'
+  },
+  'profile.placeholder': {
+    en: 'Register your Web3 identity on https://dmsg.net/',
+    zh: '在 https://dmsg.net/ 注册您的 Web3 身份'
+  },
+  'profile.update_info': {
+    en: 'Update your profile information on https://dmsg.net/',
+    zh: '在 https://dmsg.net/ 更新您的个人信息'
+  },
+
   // Assistant
   'assistant.title': {
     en: 'Assistant',

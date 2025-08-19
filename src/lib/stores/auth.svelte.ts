@@ -82,10 +82,11 @@ async function onAuthChanged(auth: AuthInfo) {
   authStore.auth = auth
   authStore.user = null
   assistantStore.userID = authStore.auth.id
-  if (authStore.auth.isAuthenticated()) {
+
+  if (auth.isAuthenticated()) {
     authStore.isSigningIn = false
     authStore.signInFallback = false
-    authStore.user = loadUserInfo(authStore.auth.id)
+    authStore.user = tryGetUserInfo(authStore.auth.id)
 
     get_user()
   }
@@ -96,16 +97,13 @@ async function init() {
   listen<IdentityInfo>(IDENTITY_EVENT, (event) => {
     onAuthChanged(new AuthInfo(event.payload))
   })
-
-  const res: IdentityInfo = await invoke('identity')
-  authStore.auth = new AuthInfo(res)
 }
 
 init().catch((err) => {
   console.error('Failed to initialize auth store', err)
 })
 
-function loadUserInfo(id: string) {
+function tryGetUserInfo(id: string) {
   try {
     let user = localStorage.getItem(`UserInfo:${id}`)
     if (user) {

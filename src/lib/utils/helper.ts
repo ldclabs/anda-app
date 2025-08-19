@@ -13,3 +13,10 @@ export function formatDateTime(ts: bigint | number): string {
 
   return new Date(t).toLocaleDateString()
 }
+
+export function shortId(id: string, long: boolean = false): string {
+  if (long) {
+    return id.length > 28 ? id.slice(0, 14) + '...' + id.slice(-14) : id
+  }
+  return id.length > 14 ? id.slice(0, 7) + '...' + id.slice(-7) : id
+}

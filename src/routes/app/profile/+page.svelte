@@ -2,14 +2,19 @@
   import AndaPlaceholder from '$lib/components/ui/AndaPlaceholder.svelte'
   import { authStore, get_user, logout } from '$lib/stores/auth.svelte'
   import { t } from '$lib/stores/i18n'
-  import { Avatar, Button, Heading, Spinner } from 'flowbite-svelte'
+  import { shortId } from '$lib/utils/helper'
+  import { renderMarkdown } from '$lib/utils/markdown'
+  import { Avatar, Button, Clipboard, Heading, Spinner } from 'flowbite-svelte'
   import {
     ArrowRightToBracketOutline,
-    UserCircleOutline
+    CheckOutline,
+    FileCopyOutline
   } from 'flowbite-svelte-icons'
   import { onMount } from 'svelte'
 
   const userInfo = $derived(authStore.user)
+  const [profilePlaceholder] = renderMarkdown(t('profile.placeholder'))
+  const [profileUpdateInfo] = renderMarkdown(t('profile.update_info'))
   let isLoading = $state(false)
   let isLoggingOut = $state(false)
 
@@ -57,7 +62,7 @@
               class="mx-auto mb-4"
             />
           {:else}
-            <UserCircleOutline size="xl" class="mx-auto mb-4 text-gray-400" />
+            <Avatar alt={userInfo.name} size="xl" class="mx-auto mb-4" />
           {/if}
 
           <Heading tag="h2" class="mb-2">{userInfo.name}</Heading>
@@ -71,20 +76,25 @@
               ></p
             >
           {/if}
-
-          <p class="mb-1 text-sm text-gray-400">ID: {userInfo.id}</p>
-
-          {#if userInfo.profile_canister}
-            <p class="mb-1 text-sm text-gray-400">
-              Profile Canister: {userInfo.profile_canister}
-            </p>
-          {/if}
-
-          {#if userInfo.cose_canister}
-            <p class="text-sm text-gray-400">
-              COSE Canister: {userInfo.cose_canister}
-            </p>
-          {/if}
+          <div class="md-content mx-auto mb-4 text-center"
+            >{@html profileUpdateInfo}</div
+          >
+          <div
+            class="mx-auto flex flex-row items-center justify-center text-neutral-500"
+          >
+            <span>ID: {shortId(userInfo.id, true)}</span>
+            <Clipboard
+              color="alternative"
+              class="border-0 p-2"
+              bind:value={userInfo.id}
+            >
+              {#snippet children(success)}
+                {#if success}<CheckOutline
+                    color="primary"
+                  />{:else}<FileCopyOutline />{/if}
+              {/snippet}
+            </Clipboard>
+          </div>
         </div>
 
         <Button
@@ -98,9 +108,10 @@
         </Button>
       </div>
     {:else}
-      <AndaPlaceholder>
-        <Heading tag="h2">Profile</Heading>
-      </AndaPlaceholder>
+      <AndaPlaceholder><span></span></AndaPlaceholder>
+      <div class="md-content mx-auto text-center text-lg"
+        >{@html profilePlaceholder}</div
+      >
     {/if}
   </div>
 </div>

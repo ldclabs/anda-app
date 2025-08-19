@@ -7,6 +7,7 @@
   import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri.mock'
   import { type as osType } from '@tauri-apps/plugin-os'
   import {
+    Avatar,
     BottomNav,
     BottomNavItem,
     Button,
@@ -172,13 +173,13 @@
             <SidebarItem label={authStore.user.name} href="/app/profile">
               {#snippet icon()}
                 {#if authStore.user!.image}
-                  <img
+                  <Avatar
+                    data-name={authStore.user!.name}
                     src={authStore.user!.image}
-                    alt={authStore.user!.name + 'image'}
-                    class="size-8 rounded-full"
+                    size="sm"
                   />
                 {:else}
-                  <UserCircleOutline size="xl" />
+                  <Avatar size="sm" />
                 {/if}
               {/snippet}
             </SidebarItem>
