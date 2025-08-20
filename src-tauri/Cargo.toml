@@ -1,6 +1,6 @@
 [package]
 name = "anda_ai"
-version = "0.2.3"
+version = "0.2.4"
 description = "Anda AI Assistant"
 authors = ["LDC Labs"]
 edition = "2024"
@@ -35,11 +35,11 @@ futures = { version = "0.3" }
 log = { version = "0.4", features = ["kv", "kv_serde"] }
 object_store = { version = "0.12" }
 ic-cdk = "0.18"
-ic-agent = "0.41"
-ic_auth_types = "0.5"
-ic_auth_verifier = { version = "0.5", features = ["full"] }
-ic_cose_types = "0.8"
-ic_cose = "0.8"
+ic-agent = "0.42"
+ic_auth_types = "0.6"
+ic_auth_verifier = { version = "0.6", features = ["full"] }
+ic_cose_types = "0.9"
+ic_cose = "0.9"
 ic_tee_agent = "0.6"
 rand = "0.9"
 tokio = { version = "1" }

@@ -113,7 +113,7 @@ checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
 name = "anda_ai"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "aes-gcm",
  "anda_assistant",
@@ -158,9 +158,9 @@ dependencies = [
 
 [[package]]
 name = "anda_assistant"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "675cf974b6d0fece754a28539af09b480892c9dc811271c2fc34df11ae0f9e21"
+checksum = "09016b83e372568889f5d918f8c7d2600055b3227752502ed51612bb3d4720bb"
 dependencies = [
  "anda_cognitive_nexus",
  "anda_core",
@@ -174,9 +174,9 @@ dependencies = [
 
 [[package]]
 name = "anda_cloud_cdk"
-version = "0.1.6"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af738c97220ee60325a1d51d481815c99f830c24be5c0c389e705bdcf92d8cb0"
+checksum = "ae69c47ed0dced5103be0199ac08cbdd270caf363831ff903d4b2022bf95b405"
 dependencies = [
  "candid",
  "ciborium",
@@ -184,15 +184,15 @@ dependencies = [
  "ic_auth_verifier",
  "serde",
  "sha3",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "url",
 ]
 
 [[package]]
 name = "anda_cognitive_nexus"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34c3fad7adac7c3506d35f6a7a16a6eb9399a85fa38e1d9e6a578851676eb533"
+checksum = "93fd008209cbdfed6a652259ded99eb756c5dca7d85f5e220c869df9486d3db6"
 dependencies = [
  "anda_db",
  "anda_db_schema",
@@ -211,9 +211,9 @@ dependencies = [
 
 [[package]]
 name = "anda_core"
-version = "0.7.4"
+version = "0.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f67f66c873e5a410b76bd2f1b774a00468a001b3d7a4568c6a3f3dd532cbe8c"
+checksum = "b838edd774e406a3fca61ee772e35804b31ed4162b5ecb19d38375447cf910f9"
 dependencies = [
  "anda_db_schema",
  "async-trait",
@@ -232,15 +232,15 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_json",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "tokio-util",
 ]
 
 [[package]]
 name = "anda_db"
-version = "0.5.4"
+version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96033241af8b96914f7c631ecb2ca7375aed19ebc980b9fa9f89c106d5332c56"
+checksum = "af50b7d744d5daac8dbc14f672b8e8502f8675f92edfce5963590ee5ab82f187"
 dependencies = [
  "anda_db_btree",
  "anda_db_hnsw",
@@ -261,7 +261,7 @@ dependencies = [
  "serde",
  "tantivy",
  "tantivy-jieba",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "tokio",
  "tokio-util",
  "zstd-safe",
@@ -281,14 +281,14 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
 name = "anda_db_derive"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11077e0264860f87dc79d4e0c6385ea505b4b5f3a971f4b60472a249f2aac364"
+checksum = "a845f2c6dd49ca397ae1f39642b462ccd1d14cff02bfadb3cd567adc21fd263a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -314,14 +314,14 @@ dependencies = [
  "rustc-hash",
  "serde",
  "smallvec",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
 name = "anda_db_schema"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a0370c87b6307ebb6154bc7c69bc41b8032f875907232d9a747ad58be0694b8"
+checksum = "fc99ab68491c3da8ed89e057d82a9905f2c6a8b5081a3e14551ca836fb71f2b5"
 dependencies = [
  "anda_db_derive",
  "base64 0.22.1",
@@ -331,7 +331,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_json",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -349,7 +349,7 @@ dependencies = [
  "tantivy",
  "tantivy-jieba",
  "tantivy-tokenizer-api",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -366,9 +366,9 @@ dependencies = [
 
 [[package]]
 name = "anda_engine"
-version = "0.7.8"
+version = "0.7.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e689c5979ece4f7f6cf3e839c1c8342c4c62aadbe21c4a72038efd07b9bd1b9"
+checksum = "b16dc9d31e0d461c5d420296ac2fea5dfe16ef47b5894791d5d26a60a2ce7ede"
 dependencies = [
  "anda_cloud_cdk",
  "anda_cognitive_nexus",
@@ -421,7 +421,7 @@ dependencies = [
  "nom 8.0.0",
  "serde",
  "serde_json",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -448,9 +448,9 @@ dependencies = [
 
 [[package]]
 name = "anda_web3_client"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2d8016e58077341979e5b86e2b252490c4e91de02e2e0492bffaa3de9f4deb1"
+checksum = "6f55584d2de495c623c99412cd70b06b10939fd32535cdb014924b12b2237d03"
 dependencies = [
  "anda_core",
  "anda_engine",
@@ -967,9 +967,9 @@ dependencies = [
 
 [[package]]
 name = "bon"
-version = "3.7.0"
+version = "3.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67a0c21249ad725ebcadcb1b1885f8e3d56e8e6b8924f560268aab000982d637"
+checksum = "537c317ddf588aab15c695bf92cf55dec159b93221c074180ca3e0e5a94da415"
 dependencies = [
  "bon-macros",
  "rustversion",
@@ -977,9 +977,9 @@ dependencies = [
 
 [[package]]
 name = "bon-macros"
-version = "3.7.0"
+version = "3.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a660ebdea4d4d3ec7788cfc9c035b66efb66028b9b97bf6cde7023ccc8e77e28"
+checksum = "ca5abbf2d4a4c6896197c9de13d6d7cb7eff438c63dacde1dde980569cb00248"
 dependencies = [
  "darling 0.21.2",
  "ident_case",
@@ -1212,7 +1212,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -1280,9 +1280,9 @@ dependencies = [
 
 [[package]]
 name = "cfg-if"
-version = "1.0.1"
+version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9555578bc9e57714c812a1f84e4fc5b4d21fcb063490c624de019f7464c91268"
+checksum = "2fd1289c04a9ea8cb22300a459a72a385d7c73d3259e2ed7dcb2af674838cfa9"
 
 [[package]]
 name = "cfg_aliases"
@@ -2738,7 +2738,7 @@ dependencies = [
  "objc2-app-kit",
  "once_cell",
  "serde",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "windows-sys 0.59.0",
  "x11rb",
  "xkeysym",
@@ -2934,6 +2934,18 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 dependencies = [
  "serde",
 ]
+
+[[package]]
+name = "hex-literal"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
+
+[[package]]
+name = "hex-literal"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcaaec4551594c969335c98c903c1397853d4198408ea609190f420500f6be71"
 
 [[package]]
 name = "hkdf"
@@ -3145,9 +3157,9 @@ dependencies = [
 
 [[package]]
 name = "ic-agent"
-version = "0.41.0"
+version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9f0125ba06162d2626d80318cad1d3540426a92d2929c5a7a10edc0b0127cca"
+checksum = "65511dadb3b00d71d52355c6589505f8e1c3399aa48cf93f97b04faa3b09c5b9"
 dependencies = [
  "arc-swap",
  "async-channel 1.9.0",
@@ -3166,7 +3178,7 @@ dependencies = [
  "http",
  "http-body",
  "ic-certification 3.0.3",
- "ic-ed25519",
+ "ic-ed25519 0.2.0",
  "ic-transport-types",
  "ic-verify-bls-signature 0.5.0",
  "k256",
@@ -3184,7 +3196,7 @@ dependencies = [
  "serde_repr",
  "sha2 0.10.9",
  "stop-token",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "time",
  "tokio",
  "tower-service",
@@ -3207,14 +3219,14 @@ dependencies = [
  "serde_bytes",
  "serde_cbor",
  "sha2 0.10.9",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
 name = "ic-cdk"
-version = "0.18.5"
+version = "0.18.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db9cc3e0e86ee12504c749fa33793014f1f4d6956a8a70e4db595169c5f6ac26"
+checksum = "3694c302426834b1300c095b43dee60aaf07264ca07c8f6456fc6b898c99c72f"
 dependencies = [
  "candid",
  "ic-cdk-executor",
@@ -3225,7 +3237,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "slotmap",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -3240,9 +3252,9 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk-macros"
-version = "0.18.5"
+version = "0.18.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b190cace2b141a5801252115bdc27397d47f086c928af3e917ce1da81b17e3cd"
+checksum = "b2cd13805284d5f422012c392a132757c74bd1bb2f7baeda2f3fca5cbe3d8ce7"
 dependencies = [
  "candid",
  "darling 0.20.11",
@@ -3286,7 +3298,24 @@ dependencies = [
  "hkdf",
  "pem 1.1.1",
  "rand 0.8.5",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
+ "zeroize",
+]
+
+[[package]]
+name = "ic-ed25519"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba67d72c59e6e7a9794054bf991f6d6f397073f36b02d66ca652aa6f4c2117f3"
+dependencies = [
+ "candid",
+ "curve25519-dalek",
+ "ed25519-dalek",
+ "hex-literal 0.4.1",
+ "hkdf",
+ "pem 1.1.1",
+ "rand 0.8.5",
+ "thiserror 2.0.16",
  "zeroize",
 ]
 
@@ -3332,7 +3361,7 @@ dependencies = [
  "serde_bytes",
  "sha2 0.10.9",
  "sha3",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "url",
 ]
 
@@ -3348,10 +3377,12 @@ dependencies = [
 
 [[package]]
 name = "ic-secp256k1"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf559ce911c6d6bcebc5ba3d7dafe5003550bb37173398ba80df24cf0bab38b9"
+checksum = "e8c0b976993791865897b9edffd153253cef7b9ff2b51b75bb2a1ac82ebfcad7"
 dependencies = [
+ "candid",
+ "hex-literal 0.4.1",
  "hmac",
  "k256",
  "lazy_static",
@@ -3390,10 +3421,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "ic-transport-types"
-version = "0.41.0"
+name = "ic-stable-structures"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5527e1eed0407cf4aa8ced1bc22181c2ae09f8385a00d270f146310b9379c6ad"
+checksum = "e54aeb082293c69def5ab34c70593ba85ff000386f7d0eacdf73514daaeca031"
+dependencies = [
+ "ic_principal",
+]
+
+[[package]]
+name = "ic-transport-types"
+version = "0.42.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "27ddcfae6150a88556f1f09b2197a727fd126df7c15c3609c640fdac18f11fc1"
 dependencies = [
  "candid",
  "hex",
@@ -3404,7 +3444,7 @@ dependencies = [
  "serde_cbor",
  "serde_repr",
  "sha2 0.10.9",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -3436,18 +3476,18 @@ dependencies = [
 
 [[package]]
 name = "ic-vetkeys"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d0fe4e1f361dea9b93841e428c00c6934eb5256ee9d35890db2fced4ac1a3c9"
+checksum = "89db8e638924d9e07dd8fa33dc5cfcdc69b7331bed7fcc72e2586f3956b12e58"
 dependencies = [
  "anyhow",
  "candid",
  "futures",
- "hex",
+ "hex-literal 1.0.0",
  "hkdf",
  "ic-cdk",
  "ic-cdk-macros",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "ic_bls12_381",
  "lazy_static",
  "pairing",
@@ -3456,7 +3496,6 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_cbor",
- "serde_with",
  "sha2 0.10.9",
  "sha3",
  "strum 0.27.2",
@@ -3473,9 +3512,9 @@ checksum = "8877193e1921b5fd16accb0305eb46016868cd1935b05c05eca0ec007b943272"
 
 [[package]]
 name = "ic_auth_types"
-version = "0.5.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71abf17283d1521ed3dbaa2263737a2d869638720bac254157c2e774dd7535ed"
+checksum = "8f70a6e9d1f5df233d5ba5c75aae1fda54e6914554f166b598a6b2ab60fffdc7"
 dependencies = [
  "base64 0.22.1",
  "candid",
@@ -3487,9 +3526,9 @@ dependencies = [
 
 [[package]]
 name = "ic_auth_verifier"
-version = "0.5.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01873e9f7ecf1433051bb929576bd6232510f4d34af5e606b80998cbeb4217f9"
+checksum = "65566dc6e89e3363aba0ffbfbbbe966fa82c57480531cbf0d1cdd95763363ae1"
 dependencies = [
  "arc-swap",
  "base64 0.22.1",
@@ -3529,9 +3568,9 @@ dependencies = [
 
 [[package]]
 name = "ic_cose"
-version = "0.8.13"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c0eddd3b633b6c82807166c1aac3f236094c8b7b0f33132510390729456c620"
+checksum = "bdae38bee42fb1a6b2b461c8d4f450566b94fb49b10c04e8f754741ff625c08c"
 dependencies = [
  "async-trait",
  "candid",
@@ -3547,9 +3586,9 @@ dependencies = [
 
 [[package]]
 name = "ic_cose_types"
-version = "0.8.13"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37dff75e89dee21cda7db3fcdd399d17bd40feb6c373b3495f044e1206edb09d"
+checksum = "8c27937b34ae5c420f2811dfbb15f00ac40b131a1a65d7e74dc463f5a9e86dcf"
 dependencies = [
  "aes-gcm",
  "candid",
@@ -3585,9 +3624,9 @@ dependencies = [
 
 [[package]]
 name = "ic_tee_agent"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df1c0f1764f656e1255770ac0127b32cbcfddefd58119c09b620eb19485d6e9f"
+checksum = "e2d033c92eedac9c47802af6bf3505fb34bfbc74e499dc386bb815daacec614f"
 dependencies = [
  "axum-core",
  "bytes",
@@ -3607,9 +3646,9 @@ dependencies = [
 
 [[package]]
 name = "ic_tee_cdk"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "456d1e7c0bf5c40f746f60cf69f76cebf420309f5fa5ceac4061fa9340e7f114"
+checksum = "957e97294dbf7cbd4159077325bb4248a9e34375dba2036f62d06924e7db4ff9"
 dependencies = [
  "candid",
  "ciborium",
@@ -3621,16 +3660,16 @@ dependencies = [
 
 [[package]]
 name = "ic_tee_gateway_sdk"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "335204cd6657ed20c2d8ec078547ad096a92f1e7ef5ffdcdf679369b07aab725"
+checksum = "60add19093fe1f542a23bea16961b843d8a607b126f68435deaa89b30163f774"
 dependencies = [
  "arc-swap",
  "candid",
  "ciborium",
  "http",
  "ic-agent",
- "ic-ed25519",
+ "ic-ed25519 0.3.0",
  "ic-secp256k1",
  "ic_auth_types",
  "ic_auth_verifier",
@@ -3642,7 +3681,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "sha3",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "tokio",
  "tokio-util",
 ]
@@ -3679,7 +3718,7 @@ dependencies = [
  "candid",
  "crc32fast",
  "hex",
- "ic-stable-structures",
+ "ic-stable-structures 0.6.9",
  "icrc-cbor",
  "itertools 0.12.1",
  "minicbor",
@@ -4524,7 +4563,7 @@ dependencies = [
  "once_cell",
  "png",
  "serde",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "windows-sys 0.60.2",
 ]
 
@@ -5008,7 +5047,7 @@ dependencies = [
  "itertools 0.14.0",
  "parking_lot",
  "percent-encoding",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "tokio",
  "tracing",
  "url",
@@ -5149,7 +5188,7 @@ dependencies = [
  "objc2-osa-kit",
  "serde",
  "serde_json",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -5697,9 +5736,9 @@ dependencies = [
 
 [[package]]
 name = "quick-xml"
-version = "0.38.1"
+version = "0.38.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9845d9dccf565065824e69f9f235fafba1587031eda353c1f1561cd6a6be78f4"
+checksum = "d200a41a7797e6461bd04e4e95c3347053a731c32c87f066f2f0dda22dbdbba8"
 dependencies = [
  "memchr",
 ]
@@ -5718,7 +5757,7 @@ dependencies = [
  "rustc-hash",
  "rustls",
  "socket2 0.5.10",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "tokio",
  "tracing",
  "web-time",
@@ -5739,7 +5778,7 @@ dependencies = [
  "rustls",
  "rustls-pki-types",
  "slab",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "tinyvec",
  "tracing",
  "web-time",
@@ -5966,7 +6005,7 @@ checksum = "a4e608c6638b9c18977b00b475ac1f28d14e84b27d8d42f70e0bf1e3dec127ac"
 dependencies = [
  "getrandom 0.2.16",
  "libredox",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -6823,7 +6862,7 @@ checksum = "297f631f50729c8c99b84667867963997ec0b50f32b2a7dbcab828ef0541e8bb"
 dependencies = [
  "num-bigint",
  "num-traits",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "time",
 ]
 
@@ -7322,7 +7361,7 @@ dependencies = [
  "tantivy-stacker",
  "tantivy-tokenizer-api",
  "tempfile",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "time",
  "uuid",
  "winapi",
@@ -7547,7 +7586,7 @@ dependencies = [
  "tauri-runtime",
  "tauri-runtime-wry",
  "tauri-utils",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "tokio",
  "tray-icon",
  "url",
@@ -7600,7 +7639,7 @@ dependencies = [
  "sha2 0.10.9",
  "syn 2.0.106",
  "tauri-utils",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "time",
  "url",
  "uuid",
@@ -7649,7 +7688,7 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-plugin",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -7665,7 +7704,7 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "tauri-utils",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "tracing",
  "url",
  "windows-registry",
@@ -7684,7 +7723,7 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-plugin",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -7705,7 +7744,7 @@ dependencies = [
  "swift-rs",
  "tauri",
  "tauri-plugin",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "time",
 ]
 
@@ -7725,7 +7764,7 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-plugin",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "url",
  "windows",
  "zbus",
@@ -7746,7 +7785,7 @@ dependencies = [
  "sys-locale",
  "tauri",
  "tauri-plugin",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -7759,7 +7798,7 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-plugin-deep-link",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "tracing",
  "windows-sys 0.60.2",
  "zbus",
@@ -7789,7 +7828,7 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "tempfile",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "time",
  "tokio",
  "url",
@@ -7815,7 +7854,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tauri-utils",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "url",
  "webkit2gtk",
  "webview2-com",
@@ -7879,7 +7918,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "swift-rs",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "toml 0.9.5",
  "url",
  "urlpattern",
@@ -7899,15 +7938,15 @@ dependencies = [
 
 [[package]]
 name = "tempfile"
-version = "3.20.0"
+version = "3.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8a64e3985349f2441a1a9ef0b853f869006c3855f2cda6862a94d26ebb9d6a1"
+checksum = "15b61f8f20e3a6f7e0649d825294eaf317edce30f82cf6026e7e4cb9222a7d1e"
 dependencies = [
  "fastrand",
  "getrandom 0.3.3",
  "once_cell",
  "rustix 1.0.8",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -7932,11 +7971,11 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "2.0.15"
+version = "2.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80d76d3f064b981389ecb4b6b7f45a0bf9fdac1d5b9204c7bd6714fecc302850"
+checksum = "3467d614147380f2e4e374161426ff399c91084acd2363eaf549172b3d5e60c0"
 dependencies = [
- "thiserror-impl 2.0.15",
+ "thiserror-impl 2.0.16",
 ]
 
 [[package]]
@@ -7952,9 +7991,9 @@ dependencies = [
 
 [[package]]
 name = "thiserror-impl"
-version = "2.0.15"
+version = "2.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44d29feb33e986b6ea906bd9c3559a856983f92371b3eaa5e83782a351623de0"
+checksum = "6c5e1be1c48b9172ee610da68fd9cd2770e7a4056cb3fc98710ee6906f0c7960"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -8327,7 +8366,7 @@ dependencies = [
  "once_cell",
  "png",
  "serde",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "windows-sys 0.59.0",
 ]
 
@@ -8832,7 +8871,7 @@ version = "0.38.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "36695906a1b53a3bf5c4289621efedac12b73eeb0b89e7e1a89b517302d5d75c"
 dependencies = [
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "windows",
  "windows-core",
 ]
@@ -8855,11 +8894,11 @@ checksum = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
 
 [[package]]
 name = "winapi-util"
-version = "0.1.9"
+version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
+checksum = "0978bf7171b3d90bac376700cb56d606feb40f251a475a5d6634613564460b22"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -9388,7 +9427,7 @@ dependencies = [
  "sha2 0.10.9",
  "soup3",
  "tao-macros",
- "thiserror 2.0.15",
+ "thiserror 2.0.16",
  "url",
  "webkit2gtk",
  "webkit2gtk-sys",
