@@ -210,7 +210,7 @@
                   updaterStore.isRestarting}
                 ><RefreshOutline
                   size="lg"
-                  color="red"
+                  color="green"
                   class={updaterStore.isDownloading ? 'animate-spin' : ''}
                 />
                 <span class="ms-3"
