@@ -9,9 +9,10 @@ export interface Settings {
 }
 
 export interface SecretSettings {
-  preferred_provider: 'gemini' | 'openai'
+  preferred_provider: 'gemini' | 'openai' | 'deepseek'
   gemini?: ModelProvider // model: 'gemini-2.5-pro'
-  openai?: ModelProvider // model: 'gpt-5' or 'gpt-5-2025-08-07' ?
+  openai?: ModelProvider // model: 'gpt-5'
+  deepseek?: ModelProvider // model: 'deepseek-reasoner'
 }
 
 export interface ModelProvider {
@@ -26,7 +27,7 @@ export const settingsStore = $state({
 } as Settings)
 
 export const secretSettingsStore = $state({
-  preferred_provider: 'openai'
+  preferred_provider: 'deepseek'
 } as SecretSettings)
 
 export async function get_settings() {
@@ -35,7 +36,6 @@ export async function get_settings() {
     res.theme = 'system'
   }
   Object.assign(settingsStore, res)
-  console.log('settingsStore', settingsStore)
 }
 
 export async function set_setting(

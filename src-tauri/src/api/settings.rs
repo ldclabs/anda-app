@@ -82,6 +82,14 @@ pub async fn get_secret_setting(app: AppHandle, key: String) -> Result<Json> {
             Some(cfg) => Ok(cfg.openai.as_ref().map(|v| json!(v)).unwrap_or(Json::Null)),
             None => Ok(Json::Null),
         },
+        "deepseek" => match state.assistant.as_ref() {
+            Some(cfg) => Ok(cfg
+                .deepseek
+                .as_ref()
+                .map(|v| json!(v))
+                .unwrap_or(Json::Null)),
+            None => Ok(Json::Null),
+        },
         _ => Err(format!("Unknown secret setting key: {:?}", key).into()),
     })
 }
@@ -109,6 +117,13 @@ pub async fn set_secret_setting(app: AppHandle, key: String, value: Json) -> Res
         "openai" => {
             if let Some(cfg) = state.assistant.as_mut() {
                 cfg.openai = Some(serde_json::from_value(value)?);
+                return Ok::<bool, BoxError>(true);
+            }
+            Ok(false)
+        }
+        "deepseek" => {
+            if let Some(cfg) = state.assistant.as_mut() {
+                cfg.deepseek = Some(serde_json::from_value(value)?);
                 return Ok::<bool, BoxError>(true);
             }
             Ok(false)

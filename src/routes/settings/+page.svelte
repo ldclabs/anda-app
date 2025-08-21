@@ -16,10 +16,11 @@
     CogOutline,
     ExclamationCircleOutline,
     EyeOutline,
+    EyeSlashOutline,
     GlobeOutline,
     WandMagicSparklesOutline
   } from 'flowbite-svelte-icons'
-  import { onMount } from 'svelte'
+  import { onMount, tick } from 'svelte'
 
   // 基础状态
   let isLoading = $state(false)
@@ -51,37 +52,53 @@
 
   const providerOptions = [
     { value: 'gemini', name: 'Google Gemini' },
-    { value: 'openai', name: 'OpenAI GPT' }
+    { value: 'openai', name: 'OpenAI GPT' },
+    { value: 'deepseek', name: 'DeepSeek' }
   ]
 
-  let currentProvider = $state<'gemini' | 'openai'>(
-    secretSettingsStore.preferred_provider || 'gemini'
-  )
-
-  let providerState = $state<ModelProvider>(
-    secretSettingsStore[secretSettingsStore.preferred_provider || 'gemini'] || {
-      model: 'gemini-2.5-pro',
-      api_key: '',
-      api_base: ''
-    }
-  )
-
-  function setAIProvider() {
-    switch (currentProvider) {
+  function defaultProvider(provider: string): ModelProvider {
+    switch (provider) {
       case 'gemini':
-        providerState = secretSettingsStore[currentProvider] || {
+        return {
           model: 'gemini-2.5-pro',
           api_key: '',
           api_base: ''
         }
-        break
       case 'openai':
-        providerState = secretSettingsStore[currentProvider] || {
+        return {
           model: 'gpt-5',
           api_key: '',
           api_base: ''
         }
-        break
+      case 'deepseek':
+        return {
+          model: 'deepseek-reasoner',
+          api_key: '',
+          api_base: ''
+        }
+      default:
+        return {
+          model: '',
+          api_key: '',
+          api_base: ''
+        }
+    }
+  }
+
+  let currentProvider = $state<'gemini' | 'openai' | 'deepseek'>(
+    secretSettingsStore.preferred_provider
+  )
+
+  let providerState = $state<ModelProvider>(
+    defaultProvider(secretSettingsStore.preferred_provider)
+  )
+
+  let showAiApiKey = $state(false)
+
+  function selectProvider() {
+    providerState = {
+      ...defaultProvider(currentProvider),
+      ...secretSettingsStore[currentProvider]
     }
   }
 
@@ -107,6 +124,8 @@
         return 'https://generativelanguage.googleapis.com/v1beta/openai'
       case 'openai':
         return 'https://api.openai.com/v1'
+      case 'deepseek':
+        return 'https://api.deepseek.com'
       default:
         return ''
     }
@@ -171,17 +190,15 @@
       await Promise.all([
         get_secret_setting('preferred_provider'),
         get_secret_setting('gemini'),
-        get_secret_setting('openai')
+        get_secret_setting('openai'),
+        get_secret_setting('deepseek')
       ])
 
-      currentProvider = secretSettingsStore.preferred_provider || 'gemini'
-      providerState = secretSettingsStore[
-        secretSettingsStore.preferred_provider || 'gemini'
-      ] || {
-        model: 'gemini-2.5-pro',
-        api_key: '',
-        api_base: ''
-      }
+      currentProvider =
+        secretSettingsStore.preferred_provider || currentProvider
+
+      await tick() // 等待 currentProvider 状态更新
+      selectProvider()
     } catch (error) {
       console.error('Failed to load settings:', error)
       showNotification('error', t('settings.load_failed'))
@@ -393,7 +410,7 @@
               <Select
                 bind:value={currentProvider}
                 disabled={isLoading}
-                onchange={setAIProvider}
+                onchange={selectProvider}
                 class="w-full"
               >
                 {#each providerOptions as option}
@@ -436,14 +453,26 @@
                   {t('settings.ai.api_key')} *
                 </label>
                 <Input
-                  type="text"
+                  type={showAiApiKey ? 'text' : 'password'}
                   id="ai_api_key"
                   minlength={10}
                   bind:value={providerState.api_key}
                   disabled={isLoading}
-                  class="w-full"
+                  class="w-full pl-10"
                   required
-                />
+                  >{#snippet left()}
+                    <button
+                      onclick={() => (showAiApiKey = !showAiApiKey)}
+                      class="pointer-events-auto"
+                    >
+                      {#if showAiApiKey}
+                        <EyeOutline class="h-6 w-6" />
+                      {:else}
+                        <EyeSlashOutline class="h-6 w-6" />
+                      {/if}
+                    </button>
+                  {/snippet}
+                </Input>
               </div>
 
               <!-- API Base URL 输入 -->
