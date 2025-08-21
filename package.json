@@ -1,6 +1,6 @@
 {
   "name": "anda_ai",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "",
   "type": "module",
   "scripts": {
@@ -18,10 +18,12 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@ldclabs/cose-ts": "^1.4.2",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-os": "^2",
     "@tauri-apps/plugin-updater": "~2.9.0",
+    "cborg": "^4.2.13",
     "debounce": "^2.2.0",
     "emoji-toolkit": "^9.0.1",
     "katex": "^0.16.22",

@@ -30,7 +30,7 @@
   // Safe OS type detection
   const ot = isTauriEnvironment() ? osType() : safeOsType()
   const diagnosisModalState = $state({
-    open: (view: 'kip' | 'conversation') => {}
+    open: (view: 'kip' | 'conversation', _id?: number) => {}
   })
 
   let signInModal = $state(false)

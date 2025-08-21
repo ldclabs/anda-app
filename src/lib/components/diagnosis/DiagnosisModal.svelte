@@ -1,46 +1,82 @@
 <script lang="ts">
   import { assistantStore } from '$lib/stores/assistant.svelte'
-  import type { Conversation, KIPLogs } from '$lib/types/assistant'
-  import { formatDateTime } from '$lib/utils/helper'
+  import type { Conversation, KIPLog } from '$lib/types/assistant'
+  import { formatDateTime, ID2Cursor } from '$lib/utils/helper'
   import { scrollIntoView, scrollOnHooks } from '$lib/utils/window'
   import { Button, Modal, Spinner } from 'flowbite-svelte'
   import { onMount, tick } from 'svelte'
 
   let {
     callback
-  }: { callback: { open: (view: 'kip' | 'conversation') => void } } = $props()
+  }: {
+    callback: { open: (view: 'kip' | 'conversation', _id?: number) => void }
+  } = $props()
   // 全局单例状态管理
-  let kipLogs = $state<KIPLogs[]>([])
+  let kipLogs = $state<KIPLog[]>([])
   let conversations = $state<Conversation[]>([])
   let nextKipCursor = $state<string | undefined>()
+  let nextConversationCursor = $state<string | undefined>()
   let isLoading = $state(false)
   let isLoadingPrev = $state(false)
   let currentView = $state<'kip' | 'conversation'>('kip')
   let isOpen = $state(false)
 
-  callback.open = (view: 'kip' | 'conversation') => {
+  callback.open = (view: 'kip' | 'conversation', _id?: number) => {
     isOpen = true
     currentView = view
     if (view === 'kip') {
-      loadKipLogs()
+      loadKipLogs(_id)
     } else {
-      loadConversations()
+      loadConversations(_id)
     }
   }
 
-  async function loadKipLogs() {
+  async function loadKipLogs(_id?: number) {
     isLoading = true
     nextKipCursor = undefined
     try {
-      const result = await assistantStore.listKipLogs(undefined, 10)
+      const result = await assistantStore.listKipLogs(
+        _id ? ID2Cursor(_id + 1) : undefined,
+        10
+      )
       if (result.result) {
         kipLogs = result.result
         nextKipCursor = result.next_cursor
       }
       await tick()
-      scrollIntoView(`dm-kiplog-${kipLogs.at(-1)?._id}`, 'smooth', 'start')
+      scrollIntoView(
+        `dm-kiplog-${_id || kipLogs.at(-1)?._id}`,
+        'smooth',
+        'start'
+      )
     } catch (error) {
       console.error('Failed to load KIP logs:', error)
+    } finally {
+      isLoading = false
+    }
+  }
+
+  async function loadConversations(_id?: number) {
+    isLoading = true
+    nextConversationCursor = undefined
+    try {
+      const result = await assistantStore.listConversations(
+        _id ? ID2Cursor(_id + 1) : undefined,
+        10
+      )
+      if (result.result) {
+        conversations = result.result
+        nextConversationCursor = result.next_cursor
+      }
+
+      await tick()
+      scrollIntoView(
+        `dm-conversation-${_id || conversations.at(-1)?._id}`,
+        'smooth',
+        'start'
+      )
+    } catch (error) {
+      console.error('Failed to load conversations:', error)
     } finally {
       isLoading = false
     }
@@ -58,44 +94,31 @@
       }
     } catch (error) {
       console.error('Failed to load more KIP logs:', error)
-      return false
     } finally {
       isLoadingPrev = false
     }
-  }
-
-  async function loadConversations() {
-    isLoading = true
-    try {
-      await assistantStore.loadLatestConversations()
-      conversations = assistantStore.conversations
-
-      await tick()
-      scrollIntoView(
-        `dm-conversation-${conversations.at(-1)?._id}`,
-        'smooth',
-        'start'
-      )
-    } catch (error) {
-      console.error('Failed to load conversations:', error)
-    } finally {
-      isLoading = false
-    }
+    return false
   }
 
   async function loadMoreConversations() {
-    if (isLoadingPrev) return false
+    if (isLoadingPrev || nextConversationCursor) return false
     isLoadingPrev = true
     try {
-      const hasMore = await assistantStore.loadPreviousConversations()
-      conversations = assistantStore.conversations
-      return hasMore
+      const result = await assistantStore.listConversations(
+        nextConversationCursor,
+        10
+      )
+      if (result.result) {
+        conversations = [...conversations, ...result.result]
+        nextConversationCursor = result.next_cursor
+        return !!nextConversationCursor
+      }
     } catch (error) {
       console.error('Failed to load more conversations:', error)
-      return false
     } finally {
       isLoadingPrev = false
     }
+    return false
   }
 
   function handleViewChange(view: 'kip' | 'conversation') {
@@ -152,19 +175,19 @@
       <div class="flex gap-2">
         <Button
           size="sm"
-          color={currentView === 'kip' ? 'primary' : 'alternative'}
-          class="ring-0!"
-          onclick={() => handleViewChange('kip')}
-        >
-          KIP Logs
-        </Button>
-        <Button
-          size="sm"
           color={currentView === 'conversation' ? 'primary' : 'alternative'}
           class="ring-0!"
           onclick={() => handleViewChange('conversation')}
         >
           Conversations
+        </Button>
+        <Button
+          size="sm"
+          color={currentView === 'kip' ? 'primary' : 'alternative'}
+          class="ring-0!"
+          onclick={() => handleViewChange('kip')}
+        >
+          KIP Logs
         </Button>
       </div>
     </div>

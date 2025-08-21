@@ -15,6 +15,7 @@ use anda_engine::{
 use anda_object_store::MetaStoreBuilder;
 use anda_web3_client::client::Client as Web3Client;
 use arc_swap::ArcSwap;
+use candid::Principal;
 use futures::try_join;
 use ic_agent::Agent;
 use ic_auth_types::ByteBufB64;
@@ -111,6 +112,18 @@ impl<R: Runtime> AndaAssistant<R> {
         Box::pin(async move {
             if let Some(assistant) = assistant {
                 assistant.self_name().await
+            } else {
+                None
+            }
+        })
+    }
+
+    pub fn caller_name(&self, id: Principal) -> BoxPinFut<Option<String>> {
+        let assistant = self.inner.assistant.read().clone();
+
+        Box::pin(async move {
+            if let Some(assistant) = assistant {
+                assistant.caller_name(&id).await
             } else {
                 None
             }

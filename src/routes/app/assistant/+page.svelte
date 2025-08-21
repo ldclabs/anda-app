@@ -91,12 +91,6 @@
       {/each}
     {/if}
   </div>
-  {#if assistantStore.isThinking}
-    <div class="mb-4 flex items-center gap-2">
-      <Spinner size="4" />
-      <span class="text-sm">{t('assistant.thinking')}</span>
-    </div>
-  {/if}
 
   <div
     class="sticky right-0 bottom-0 left-0 z-10 w-full max-w-4xl transform px-4 pb-4"
@@ -108,7 +102,7 @@
       <ChatInput
         user={authStore.auth.id}
         onSend={handleSendMessage}
-        disabled={assistantStore.isThinking}
+        disabled={assistantStore.isSubmitting || assistantStore.isThinking > 0}
       />
       {#if !assistantStore.isReady}
         <div

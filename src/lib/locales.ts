@@ -213,8 +213,8 @@ export const translations: Record<string, Record<string, string>> = {
     zh: 'AI 助手'
   },
   'assistant.thinking': {
-    en: 'Thinking...',
-    zh: '思考中...'
+    en: 'Thinking',
+    zh: '思考中'
   },
   'assistant.retry': {
     en: 'Retry',

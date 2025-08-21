@@ -72,7 +72,7 @@
     bind:value={message}
     placeholder={t('assistant.prompt.placeholder')}
     rows={1}
-    class="min-h-8 resize-none rounded-lg border-0 p-2 placeholder-gray-500 focus:border-0 focus:ring-0 dark:placeholder-gray-400"
+    class="min-h-8 resize-none rounded-lg border-0 p-2 placeholder-gray-500 focus:border-0 focus:ring-0 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
     onkeydown={handleKeydown}
     oninput={autoResize}
     {disabled}

@@ -80,6 +80,7 @@ pub fn run() {
             api::i18n::get_translation,
             api::assistant::assistant_info,
             api::assistant::assistant_name,
+            api::assistant::caller_name,
             api::assistant::tool_call,
             api::assistant::agent_run,
             api::settings::get_settings,

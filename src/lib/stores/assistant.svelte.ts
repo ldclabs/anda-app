@@ -3,7 +3,7 @@ import type {
   AgentOutput,
   Conversation,
   EngineCard,
-  KIPLogs,
+  KIPLog,
   MemoryToolArgs,
   Resource,
   Response,
@@ -14,15 +14,10 @@ import { isThinking } from '$lib/types/assistant'
 import { sleep } from '$lib/utils/helper'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
-import * as mock from './assistant.mock'
 
-const USE_MOCK_DATA = false
 const ASSISTANT_EVENT = 'AssistantReady'
 
 export async function assistant_info(): Promise<EngineCard> {
-  if (USE_MOCK_DATA) {
-    return await mock.assistant_info()
-  }
   return await invoke('assistant_info')
 }
 
@@ -30,17 +25,15 @@ export async function assistant_name(): Promise<string | null> {
   return await invoke('assistant_name')
 }
 
+export async function caller_name(): Promise<string | null> {
+  return await invoke('caller_name')
+}
+
 async function tool_call<I, O>(input: ToolInput<I>): Promise<ToolOutput<O>> {
-  if (USE_MOCK_DATA) {
-    return await mock.tool_call(input)
-  }
   return await invoke('tool_call', { input })
 }
 
 async function agent_run<I, O>(input: AgentInput): Promise<AgentOutput> {
-  if (USE_MOCK_DATA) {
-    return await mock.agent_run(input)
-  }
   return await invoke('agent_run', { input })
 }
 
@@ -67,10 +60,12 @@ class AssistantStore {
   private _latestConversationId = $state<number>(0)
   private _isLoading = $state(false)
   private _isLoadingPrev = $state(false)
-  private _isThinking = $state(false)
+  private _isThinking = $state(0)
+  private _isSubmitting = $state(false)
   private _userID = '2vxsx-fae'
   private _userName = ''
   private _isReady = $state(false)
+  private _callerName = $state('')
 
   get isReady() {
     return this._isReady
@@ -92,6 +87,10 @@ class AssistantStore {
     return this._isThinking
   }
 
+  get isSubmitting() {
+    return this._isSubmitting
+  }
+
   get latestConversationId() {
     return this._latestConversationId
   }
@@ -102,18 +101,23 @@ class AssistantStore {
 
   set userName(name: string) {
     this._userName = name
+    caller_name().then((callerName) => {
+      this._callerName = callerName || ''
+    })
   }
 
   set userID(id: string) {
     if (id == this._userID) return
     this._userID = id
     this._userName = ''
+    this._callerName = ''
     this._conversations = []
     this._prevConversationCursor = undefined
     this._latestConversationId = 0
     this._isLoading = false
     this._isLoadingPrev = false
-    this._isThinking = false
+    this._isThinking = 0
+    this._isSubmitting = false
   }
 
   private addConversation(conversation: Conversation) {
@@ -153,7 +157,7 @@ class AssistantStore {
     const now_ms = Date.now()
     const conversation = res.output.result!
     this.addConversation(conversation)
-    if (this._isThinking) {
+    if (this._isThinking > 0) {
       this._isThinking = isThinking(conversation)
     }
 
@@ -169,7 +173,7 @@ class AssistantStore {
   }
 
   async listKipLogs(cursor?: string, limit?: number) {
-    const res: ToolOutput<Response<KIPLogs[]>> = await tool_call({
+    const res: ToolOutput<Response<KIPLog[]>> = await tool_call({
       name: 'memory_api',
       args: {
         _type: 'ListKipLogs',
@@ -180,6 +184,24 @@ class AssistantStore {
 
     if (res.output.error) {
       console.error('ListKipLogs', res.output.error)
+      throw res.output.error
+    }
+
+    return res.output
+  }
+
+  async listConversations(cursor?: string, limit?: number) {
+    const res: ToolOutput<Response<Conversation[]>> = await tool_call({
+      name: 'memory_api',
+      args: {
+        _type: 'ListPrevConversations',
+        cursor,
+        limit
+      } as MemoryToolArgs
+    })
+
+    if (res.output.error) {
+      console.error('listConversations', res.output.error)
       throw res.output.error
     }
 
@@ -274,18 +296,21 @@ class AssistantStore {
     const prompt = content.trim()
     if (!prompt) return
 
-    this._isThinking = true
+    this._isSubmitting = true
     try {
       const res = await agent_run({
         name: 'assistant',
         prompt,
         resources,
         meta: {
-          user: this._userName || undefined
+          user: this._callerName
+            ? this._callerName
+            : this._userName || undefined
         }
       })
 
       if (res.conversation) {
+        this._isThinking = res.conversation
         await this.fetchConversation(res.conversation)
       }
 
@@ -293,9 +318,10 @@ class AssistantStore {
         throw res.failed_reason
       }
     } catch (error) {
-      this._isThinking = false
       console.error('AssistantStore.chat', error, content, resources)
       throw error
+    } finally {
+      this._isSubmitting = false
     }
   }
 }

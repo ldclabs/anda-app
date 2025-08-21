@@ -10,14 +10,15 @@ export type Json =
   | Json[]
 
 export interface ChatMessage {
+  conversation: number
   id: string
-  role: 'user' | 'assistant'
+  role: 'user' | 'assistant' | 'tool'
   content: string
   timestamp: number
 }
 
 export interface Message {
-  role: 'system' | 'user' | 'assistant' | 'tool'
+  role: 'user' | 'assistant' | 'tool'
 
   /// The content of the message, can be text or JSON array.
   content: Json
@@ -27,6 +28,8 @@ export interface Message {
 
   /// Tool call that this message is responding to. If this message is a response to a tool call, this field should be set to the tool call ID.
   tool_call_id?: string
+
+  tool_calls?: Json[]
 
   timestamp?: number
 }
@@ -71,25 +74,43 @@ export function toChatMessages(conversation: Conversation): ChatMessage[] {
       (message.role == 'user' || message.role == 'assistant')
     ) {
       res.push({
-        id: `${conversation._id}:${i}`,
+        conversation: conversation._id,
+        id: `msg-${conversation._id}-${i}`,
         content:
           typeof message.content === 'string'
             ? message.content
             : JSON.stringify(message.content), // TODO
         role: message.role,
-        timestamp: message.timestamp || conversation.created_at
+        timestamp: message.timestamp || conversation.updated_at
       })
     }
   }
   return res
 }
 
-export function isThinking(conversation: Conversation): boolean {
+export function lastThought(conversation: Conversation): ChatMessage | null {
+  const message = conversation.messages.at(-1)
+  if (message && (message.name == '$system' || message.tool_calls)) {
+    return {
+      conversation: conversation._id,
+      id: `msg-${conversation._id}-${conversation.messages.length - 1}`,
+      content:
+        typeof message.content === 'string'
+          ? message.content
+          : JSON.stringify(message.content || message.tool_calls), // TODO
+      role: message.role,
+      timestamp: message.timestamp || conversation.updated_at
+    }
+  }
+  return null
+}
+
+export function isThinking(conversation: Conversation): number {
   if (conversation.status != 'submitted' && conversation.status != 'working') {
-    return false
+    return 0
   }
   if (Date.now() - conversation.updated_at > 60 * 1000) {
-    return false
+    return 0
   }
   // for (const message of conversation.messages.slice(1)) {
   //   if (
@@ -100,10 +121,10 @@ export function isThinking(conversation: Conversation): boolean {
   //     return true
   //   }
   // }
-  return true
+  return conversation._id
 }
 
-export interface KIPLogs {
+export interface KIPLog {
   /// The unique identifier for this resource in the Anda DB collection "kip_logs".
   _id: number
 

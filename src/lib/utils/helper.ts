@@ -1,3 +1,6 @@
+import { bytesToBase64Url } from '@ldclabs/cose-ts/utils'
+import { encode } from 'cborg'
+
 export async function sleep(ms: number): Promise<void> {
   return new Promise((res) => setTimeout(res, ms))
 }
@@ -19,4 +22,8 @@ export function shortId(id: string, long: boolean = false): string {
     return id.length > 28 ? id.slice(0, 14) + '...' + id.slice(-14) : id
   }
   return id.length > 14 ? id.slice(0, 7) + '...' + id.slice(-7) : id
+}
+
+export function ID2Cursor(_id: number): string {
+  return bytesToBase64Url(encode(_id))
 }

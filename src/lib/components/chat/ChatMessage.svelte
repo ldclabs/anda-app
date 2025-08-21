@@ -14,15 +14,16 @@
 
   let { message }: { message: ChatMessage } = $props()
   const [content, hook] = renderMarkdown(message.content)
-  const diagnosisModalState: { open: (view: 'kip' | 'conversation') => void } =
-    getContext('diagnosisModalState')
+  const diagnosisModalState: {
+    open: (view: 'kip' | 'conversation', _id?: number) => void
+  } = getContext('diagnosisModalState')
 
   let text = $state('')
   let textSuccess = $state(false)
   let mdSuccess = $state(false)
 
-  function handleDiagnosis() {
-    diagnosisModalState.open('kip')
+  function handleDiagnosis(_id?: number) {
+    diagnosisModalState.open('conversation', _id)
   }
 
   onMount(async () => {
@@ -43,7 +44,7 @@
       : 'w-full'}"
   >
     <div
-      class="pointer-events-none sticky top-0 z-10 -mt-12 -mr-2 flex flex-row gap-2 rounded-lg bg-white/80 p-2 opacity-0 backdrop-blur-xs transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 {message.role ===
+      class="pointer-events-none sticky top-0 z-10 -mt-12 -mr-2 flex flex-row gap-2 rounded-lg bg-white/80 p-2 opacity-0 backdrop-blur-xs transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 dark:bg-gray-800 {message.role ===
       'user'
         ? ''
         : 'self-end'}"
@@ -51,7 +52,7 @@
       {#if message.role === 'user'}
         <button
           class="flex items-center rounded-sm p-2 text-base font-normal text-gray-500 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-          onclick={handleDiagnosis}
+          onclick={() => handleDiagnosis(message.conversation)}
           ><InfoCircleOutline size="md" />
         </button>
       {/if}
