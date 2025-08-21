@@ -113,15 +113,18 @@ pub struct AssistantConfig {
 }
 
 impl AssistantConfig {
+    pub fn get_max_input_tokens(&self) -> usize {
+        match self.preferred_provider.as_str() {
+            "deepseek" => 128 * 1000,
+            "gemini" => 1000 * 1000,
+            "openai" => 400 * 1000,
+            "xai" => 256 * 1000,
+            _ => 64 * 1000,
+        }
+    }
+
     pub fn get_provider(&self) -> Option<(&str, &ModelProvider)> {
         match self.preferred_provider.as_str() {
-            "gemini" => self.gemini.as_ref().and_then(|p| {
-                if p.api_key.is_empty() {
-                    None
-                } else {
-                    Some(("gemini", p))
-                }
-            }),
             "deepseek" => self.deepseek.as_ref().and_then(|p| {
                 if p.api_key.is_empty() {
                     None
@@ -129,11 +132,11 @@ impl AssistantConfig {
                     Some(("deepseek", p))
                 }
             }),
-            "xai" => self.xai.as_ref().and_then(|p| {
+            "gemini" => self.gemini.as_ref().and_then(|p| {
                 if p.api_key.is_empty() {
                     None
                 } else {
-                    Some(("xai", p))
+                    Some(("gemini", p))
                 }
             }),
             "openai" => self.openai.as_ref().and_then(|p| {
@@ -141,6 +144,13 @@ impl AssistantConfig {
                     None
                 } else {
                     Some(("openai", p))
+                }
+            }),
+            "xai" => self.xai.as_ref().and_then(|p| {
+                if p.api_key.is_empty() {
+                    None
+                } else {
+                    Some(("xai", p))
                 }
             }),
             _ => None,

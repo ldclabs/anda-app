@@ -1,10 +1,10 @@
 <script lang="ts">
   import { assistantStore } from '$lib/stores/assistant.svelte'
   import type { Conversation, KIPLog } from '$lib/types/assistant'
-  import { formatDateTime, ID2Cursor } from '$lib/utils/helper'
+  import { formatDateTime, ID2Cursor, sleep } from '$lib/utils/helper'
   import { scrollIntoView, scrollOnHooks } from '$lib/utils/window'
   import { Button, Modal, Spinner } from 'flowbite-svelte'
-  import { onMount, tick } from 'svelte'
+  import { onDestroy, tick } from 'svelte'
 
   let {
     callback
@@ -14,8 +14,8 @@
   // 全局单例状态管理
   let kipLogs = $state<KIPLog[]>([])
   let conversations = $state<Conversation[]>([])
-  let nextKipCursor = $state<string | undefined>()
-  let nextConversationCursor = $state<string | undefined>()
+  let prevKipCursor = $state<string | undefined>()
+  let prevConversationCursor = $state<string | undefined>()
   let isLoading = $state(false)
   let isLoadingPrev = $state(false)
   let currentView = $state<'kip' | 'conversation'>('kip')
@@ -31,24 +31,53 @@
     }
   }
 
+  function appendConversations(data: Conversation[]) {
+    const list = [...conversations]
+    for (const item of data) {
+      const idx = list.findIndex((i) => i._id === item._id)
+      if (idx === -1) {
+        list.push(item)
+      } else {
+        list[idx] = item
+      }
+    }
+    list.sort((a, b) => a._id - b._id)
+    conversations = list
+  }
+
+  function appendKipLogs(data: KIPLog[]) {
+    const list = [...kipLogs]
+    for (const item of data) {
+      const idx = list.findIndex((i) => i._id === item._id)
+      if (idx === -1) {
+        list.push(item)
+      } else {
+        list[idx] = item
+      }
+    }
+    list.sort((a, b) => a._id - b._id)
+    kipLogs = list
+  }
+
   async function loadKipLogs(_id?: number) {
+    if (isLoading) return
+
     isLoading = true
-    nextKipCursor = undefined
     try {
       const result = await assistantStore.listKipLogs(
         _id ? ID2Cursor(_id + 1) : undefined,
         10
       )
       if (result.result) {
-        kipLogs = result.result
-        nextKipCursor = result.next_cursor
+        appendKipLogs(result.result)
+        prevKipCursor = result.next_cursor
       }
-      await tick()
-      scrollIntoView(
-        `dm-kiplog-${_id || kipLogs.at(-1)?._id}`,
-        'smooth',
-        'start'
-      )
+
+      if (_id) {
+        await tick()
+        scrollIntoView(`dm-kiplog-${_id}`, 'instant', 'start')
+      }
+      await sleep(300)
     } catch (error) {
       console.error('Failed to load KIP logs:', error)
     } finally {
@@ -57,24 +86,25 @@
   }
 
   async function loadConversations(_id?: number) {
+    if (isLoading) return
+
     isLoading = true
-    nextConversationCursor = undefined
     try {
       const result = await assistantStore.listConversations(
         _id ? ID2Cursor(_id + 1) : undefined,
         10
       )
       if (result.result) {
-        conversations = result.result
-        nextConversationCursor = result.next_cursor
+        appendConversations(result.result)
+        prevConversationCursor = result.next_cursor
       }
 
-      await tick()
-      scrollIntoView(
-        `dm-conversation-${_id || conversations.at(-1)?._id}`,
-        'smooth',
-        'start'
-      )
+      if (_id) {
+        await tick()
+        scrollIntoView(`dm-conversation-${_id}`, 'instant', 'start')
+      }
+
+      await sleep(300)
     } catch (error) {
       console.error('Failed to load conversations:', error)
     } finally {
@@ -82,16 +112,17 @@
     }
   }
 
-  async function loadMoreKipLogs() {
-    if (isLoadingPrev || !nextKipCursor) return false
+  async function loadPrevKipLogs() {
+    if (isLoadingPrev || !prevKipCursor) return false
     isLoadingPrev = true
     try {
-      const result = await assistantStore.listKipLogs(nextKipCursor, 10)
+      const result = await assistantStore.listKipLogs(prevKipCursor, 10)
       if (result.result) {
-        kipLogs = [...kipLogs, ...result.result]
-        nextKipCursor = result.next_cursor
-        return !!nextKipCursor
+        appendKipLogs(result.result)
+        prevKipCursor = result.next_cursor
+        return !!prevKipCursor
       }
+      await sleep(300)
     } catch (error) {
       console.error('Failed to load more KIP logs:', error)
     } finally {
@@ -100,19 +131,20 @@
     return false
   }
 
-  async function loadMoreConversations() {
-    if (isLoadingPrev || nextConversationCursor) return false
+  async function loadPrevConversations() {
+    if (isLoadingPrev || !prevConversationCursor) return false
     isLoadingPrev = true
     try {
       const result = await assistantStore.listConversations(
-        nextConversationCursor,
+        prevConversationCursor,
         10
       )
       if (result.result) {
-        conversations = [...conversations, ...result.result]
-        nextConversationCursor = result.next_cursor
-        return !!nextConversationCursor
+        appendConversations(result.result)
+        prevConversationCursor = result.next_cursor
+        return !!prevConversationCursor
       }
+      await sleep(300)
     } catch (error) {
       console.error('Failed to load more conversations:', error)
     } finally {
@@ -135,12 +167,15 @@
   }
 
   let scrollContainer: HTMLDivElement
+  let abortScroll: (() => void) | undefined
 
-  onMount(() => {
-    const abortScroll = scrollOnHooks(scrollContainer!, {
+  function mountScroll() {
+    if (!scrollContainer || abortScroll) return
+
+    abortScroll = scrollOnHooks(scrollContainer, {
       onTop: () => {
         if (currentView == 'kip') {
-          loadMoreKipLogs().then((hasMore) => {
+          loadPrevKipLogs().then((hasMore) => {
             if (hasMore) {
               tick().then(() => {
                 scrollContainer!.scrollTop = 100
@@ -148,7 +183,7 @@
             }
           })
         } else {
-          loadMoreConversations().then((hasMore) => {
+          loadPrevConversations().then((hasMore) => {
             if (hasMore) {
               tick().then(() => {
                 scrollContainer!.scrollTop = 100
@@ -161,11 +196,19 @@
         if (currentView == 'kip') {
           loadKipLogs()
         } else {
-          loadMoreConversations()
+          loadConversations()
         }
       }
     })
-    return abortScroll
+  }
+
+  $effect(() => {
+    isOpen && mountScroll()
+  })
+
+  onDestroy(() => {
+    abortScroll?.()
+    abortScroll = undefined
   })
 </script>
 
@@ -195,11 +238,12 @@
 
   <div
     bind:this={scrollContainer}
+    id="diagnosis-modal"
     class="flex h-full flex-col overflow-y-auto scroll-smooth"
   >
     {#if isLoadingPrev}
       <div class="flex items-center justify-center p-8">
-        <Spinner size="6" />
+        <Spinner size="4" />
       </div>
     {/if}
     {#if currentView === 'kip'}
@@ -304,7 +348,6 @@
     {#if isLoading}
       <div class="flex items-center justify-center p-4">
         <Spinner size="4" />
-        <span class="ml-2 text-sm text-gray-500">Loading more...</span>
       </div>
     {/if}
   </div>

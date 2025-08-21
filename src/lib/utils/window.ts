@@ -103,41 +103,21 @@ export function scrollOnHooks(
 ) {
   if (!node) return noop
 
-  // 减少 debounce 延迟，提升响应性
   const callTop = onTop && debounce(onTop, 200, { immediate: false })
   const callBottom = onBottom && debounce(onBottom, 200, { immediate: false })
-  const callMoveUp = onMoveUp && debounce(onMoveUp, 100, { immediate: false })
+  const callMoveUp = onMoveUp && debounce(onMoveUp, 200, { immediate: false })
   const callMoveDown =
-    onMoveDown && debounce(onMoveDown, 100, { immediate: false })
+    onMoveDown && debounce(onMoveDown, 200, { immediate: false })
   const callInMoveUpViewport =
-    inMoveUpViewport && debounce(inMoveUpViewport, 100, { immediate: false })
+    inMoveUpViewport && debounce(inMoveUpViewport, 200, { immediate: false })
   const callInMoveDownViewport =
     inMoveDownViewport &&
-    debounce(inMoveDownViewport, 100, { immediate: false })
+    debounce(inMoveDownViewport, 200, { immediate: false })
 
-  // 初始化 lastScrollTop 为当前位置
-  let lastScrollTop = node.scrollTop
-  let isInitialized = false
-
-  // 添加状态跟踪，避免重复触发
-  let hasTriggeredTop = false
-  let hasTriggeredBottom = false
-
+  let lastScrollTop = 0
   const handler = (ev: Event) => {
     const target = ev.currentTarget as HTMLElement
-    const currentScrollTop = target.scrollTop
-    const scrollDirection = currentScrollTop > lastScrollTop ? 'down' : 'up'
-
-    // 第一次滚动时初始化状态
-    if (!isInitialized) {
-      isInitialized = true
-      hasTriggeredTop = currentScrollTop <= 10
-      hasTriggeredBottom =
-        target.clientHeight + currentScrollTop + 10 >= target.scrollHeight
-    }
-
-    // 处理滚动方向回调
-    if (scrollDirection === 'down') {
+    if (target.scrollTop > lastScrollTop) {
       callMoveUp && callMoveUp()
       if (callInMoveUpViewport) {
         let children = Array.from(target.children) as HTMLElement[]
@@ -154,7 +134,7 @@ export function scrollOnHooks(
           callInMoveUpViewport(els)
         }
       }
-    } else if (scrollDirection === 'up') {
+    } else {
       callMoveDown && callMoveDown()
       if (callInMoveDownViewport) {
         let children = Array.from(target.children) as HTMLElement[]
@@ -173,37 +153,21 @@ export function scrollOnHooks(
       }
     }
 
-    // 顶部检测：接近顶部且之前未触发过
-    if (currentScrollTop <= 10 && !hasTriggeredTop) {
-      hasTriggeredTop = true
-      hasTriggeredBottom = false
+    if (target.scrollTop < lastScrollTop && target.scrollTop <= 5) {
       callTop && callTop()
-    }
-
-    // 底部检测：接近底部且之前未触发过
-    const isNearBottom =
-      target.clientHeight + currentScrollTop + 10 >= target.scrollHeight
-    if (isNearBottom && !hasTriggeredBottom) {
-      hasTriggeredBottom = true
-      hasTriggeredTop = false
+    } else if (
+      target.scrollTop > lastScrollTop &&
+      target.clientHeight + target.scrollTop + 5 >= target.scrollHeight
+    ) {
       callBottom && callBottom()
     }
 
-    // 重置状态：如果离开边界区域
-    if (currentScrollTop > 50) {
-      hasTriggeredTop = false
-    }
-    if (target.clientHeight + currentScrollTop + 50 < target.scrollHeight) {
-      hasTriggeredBottom = false
-    }
-
-    lastScrollTop = currentScrollTop
+    lastScrollTop = target.scrollTop
   }
 
   node.addEventListener('scroll', handler)
   return () => {
     node.removeEventListener('scroll', handler)
-    callTop && callTop.clear()
     callBottom && callBottom.clear()
     callMoveUp && callMoveUp.clear()
     callMoveDown && callMoveDown.clear()
@@ -242,7 +206,6 @@ export function scrollIntoView(
   const ele = document.getElementById(messageId)
 
   if (ele) {
-    console.log(messageId, ele)
     ele.scrollIntoView({
       block,
       behavior

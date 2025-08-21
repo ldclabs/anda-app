@@ -253,7 +253,7 @@ impl InnerAssistant {
         let object_store = db.object_store().clone();
         let assistant = Assistant::connect(db.clone(), None)
             .await?
-            .with_max_input_tokens(256 * 1024);
+            .with_max_input_tokens(cfg.get_max_input_tokens());
         let memory_tool = MemoryTool::new(assistant.memory());
 
         {
