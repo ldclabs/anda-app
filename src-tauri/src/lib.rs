@@ -104,6 +104,8 @@ pub fn run() {
             }
 
 
+
+
             let app_state = app.state::<AppStateCell>();
             let aes_secret = app_state.with_mut(|state| {
                 state.os_arch = tauri_plugin_os::arch().to_string();
@@ -173,6 +175,26 @@ pub fn run() {
 
             #[cfg(desktop)]
             {
+                use tauri_plugin_global_shortcut::{
+                    Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState,
+                };
+
+                #[cfg(target_os = "macos")]
+                let ctrl_n_shortcut = Shortcut::new(Some(Modifiers::META), Code::KeyP);
+                #[cfg(not(target_os = "macos"))]
+                let ctrl_n_shortcut = Shortcut::new(Some(Modifiers::CONTROL), Code::KeyP);
+
+                app.handle().plugin(
+                    tauri_plugin_global_shortcut::Builder::new()
+                        .with_handler(move |app, shortcut, event| {
+                            if shortcut == &ctrl_n_shortcut && event.state() == ShortcutState::Pressed {
+                                let _ = menu::reopen_window(app, "main", None, true);
+                            }
+                        })
+                        .build(),
+                )?;
+                app.global_shortcut().register(ctrl_n_shortcut)?;
+
                 app.manage(api::updater::Updater::default());
                 menu::setup_app_menu(app.handle())?;
                 menu::setup_app_tray(app.handle())?;
@@ -225,7 +247,7 @@ pub fn run() {
                 has_visible_windows
             );
             // 点击 Dock 图标时，显示并聚焦主窗口
-            let _ = menu::reopen_window(app, "main", None);
+            let _ = menu::reopen_window(app, "main", None, true);
         }
         tauri::RunEvent::ExitRequested { code, .. } => {
             log::info!("Exit requested event received: code = {code:?}");

@@ -1,3 +1,4 @@
+import { sleep } from '$lib/utils/helper'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { assistantStore } from './assistant.svelte'
@@ -81,12 +82,13 @@ export async function get_user() {
 async function onAuthChanged(auth: AuthInfo) {
   authStore.auth = auth
   authStore.user = null
-  assistantStore.userID = authStore.auth.id
+  assistantStore.userID = auth.id
 
   if (auth.isAuthenticated()) {
     authStore.isSigningIn = false
     authStore.signInFallback = false
-    authStore.user = tryGetUserInfo(authStore.auth.id)
+    authStore.user = tryGetUserInfo(auth.id)
+    assistantStore.loadLatestConversations()
 
     get_user()
   }
@@ -94,7 +96,9 @@ async function onAuthChanged(auth: AuthInfo) {
 
 async function init() {
   onAuthChanged(new AuthInfo(await invoke('identity')))
-  listen<IdentityInfo>(IDENTITY_EVENT, (event) => {
+  listen<IdentityInfo>(IDENTITY_EVENT, async (event) => {
+    // 等待后端变更完成
+    await sleep(400)
     onAuthChanged(new AuthInfo(event.payload))
   })
 }

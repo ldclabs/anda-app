@@ -88,7 +88,12 @@ impl<R: Runtime> ICPClient<R> {
     pub fn set_identity(&self, identity: Box<dyn Identity>) {
         let payload = IdentityInfo::from(&identity);
         self.identity.set(identity);
-        let _ = self.app.emit(IDENTITY_EVENT, payload);
+        let app = self.app.clone();
+        async_runtime::spawn(async move {
+            // 等待相关变更完成
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+            let _ = app.emit(IDENTITY_EVENT, payload);
+        });
     }
 }
 

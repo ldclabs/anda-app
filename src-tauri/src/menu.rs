@@ -76,7 +76,13 @@ pub fn setup_app_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
     let menu = Menu::with_items(
         app,
         &[
-            &MenuItem::with_id(app, "open_main", t!("menu.open_main"), true, None::<&str>)?,
+            &MenuItem::with_id(
+                app,
+                "open_main",
+                t!("menu.open_main"),
+                true,
+                Some("CmdOrCtrl+P"),
+            )?,
             &MenuItem::with_id(app, "follow_us", t!("menu.follow_us"), true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &menu_item_about(app)?,
@@ -110,10 +116,10 @@ pub fn setup_app_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
                 quit(app);
             }
             "open_main" => {
-                reopen_window(app, "main", None).unwrap();
+                reopen_window(app, "main", None, false).unwrap();
             }
             "settings" => {
-                reopen_window(app, "settings", None).unwrap();
+                reopen_window(app, "settings", None, false).unwrap();
             }
             "follow_us" => {
                 let _ = app
@@ -135,7 +141,7 @@ pub fn setup_app_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
                     let _ = window.show();
                     let _ = window.set_focus();
                 } else {
-                    let _ = reopen_window(app, "main", None);
+                    let _ = reopen_window(app, "main", None, false);
                 }
             }
         })
@@ -177,6 +183,7 @@ pub fn reopen_window<R: Runtime>(
     app: &AppHandle<R>,
     label: &str,
     search_params: Option<&str>,
+    toggle: bool,
 ) -> Result<()> {
     let window = match app.get_webview_window(label) {
         Some(window) => window,
@@ -198,15 +205,23 @@ pub fn reopen_window<R: Runtime>(
         }
     };
 
+    if toggle
+        && let Ok(visible) = window.is_visible()
+            && visible {
+                let _ = window.hide();
+                return Ok(());
+            }
+
     // 若为最小化状态，先尝试还原
     let _ = window.unminimize();
-    match window.is_visible() {
-        Ok(true) => {}
-        _ => {
-            let _ = window.show();
-        }
-    };
+    let _ = window.show();
     let _ = window.set_focus();
+
+    async_runtime::spawn(async move {
+        // 等待窗口显示后再设置焦点
+        tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+        let _ = window.set_focus();
+    });
 
     // #[cfg(debug_assertions)]
     // window.open_devtools();

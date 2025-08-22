@@ -167,7 +167,7 @@ class AssistantStore {
       now_ms - conversation.updated_at < 1200000
     ) {
       sleep(Math.min(interval, max_interval)).then(() => {
-        this.fetchConversation(_id, Math.floor(interval * 1.2), max_interval)
+        this.fetchConversation(_id, Math.floor(interval * 1.1), max_interval)
       })
     }
   }
