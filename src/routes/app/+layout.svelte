@@ -90,11 +90,12 @@
           signIn()
           signInModal = false
         }}
-        ><span>{t('app.sign_in_fallback.again')}</span
-        >{#if authStore.isSigningIn}
-          <Spinner class="ms-3 inline-flex" size="4" />
-        {/if}</Button
       >
+        <span>{t('app.sign_in_fallback.again')}</span>
+        {#if authStore.isSigningIn}
+          <Spinner class="ms-3 inline-flex" size="4" />
+        {/if}
+      </Button>
     </div>
   </Modal>
   {#if isMobile}

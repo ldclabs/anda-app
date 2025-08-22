@@ -47,7 +47,7 @@ export const authStore = $state({
   auth: new AuthInfo(),
   user: null as UserInfo | null,
   isSigningIn: false,
-  signInFallback: true
+  signInFallback: false
 })
 
 let prevTimer: number | null = null
