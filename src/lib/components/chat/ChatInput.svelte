@@ -1,7 +1,32 @@
 <script lang="ts">
   import { t } from '$lib/stores/i18n'
+  import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri.mock'
+  import { type as osType } from '@tauri-apps/plugin-os'
   import { Button } from 'flowbite-svelte'
   import { onDestroy } from 'svelte'
+
+  const ot = isTauriEnvironment() ? osType() : safeOsType()
+  const shortcutLabel = ot === 'macos' ? '⌘ ↵' : 'Ctrl ↵'
+  const isSubmitEvent =
+    ot === 'macos'
+      ? (event: KeyboardEvent) => {
+          return (
+            !event.shiftKey &&
+            !submitting &&
+            event.metaKey &&
+            (event.keyCode == 13 ||
+              (!event.isComposing && ['Enter'].includes(event.code)))
+          )
+        }
+      : (event: KeyboardEvent) => {
+          return (
+            !event.shiftKey &&
+            !submitting &&
+            event.ctrlKey &&
+            (event.keyCode == 13 ||
+              (!event.isComposing && ['Enter'].includes(event.code)))
+          )
+        }
 
   let {
     user,
@@ -33,13 +58,7 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
-    if (
-      !event.shiftKey &&
-      !submitting &&
-      event.metaKey &&
-      (event.keyCode == 13 ||
-        (!event.isComposing && ['Enter'].includes(event.code)))
-    ) {
+    if (isSubmitEvent(event)) {
       event.preventDefault()
       handleSend()
     }
@@ -82,6 +101,6 @@
     disabled={disabled || !message.trim()}
     class="flex items-center justify-center rounded-4xl border-0 px-4 py-2"
   >
-    <span>{t('assistant.run')} <b>⌘ ↵</b></span>
+    <span>{t('assistant.run')} <b>{shortcutLabel}</b></span>
   </Button>
 </div>
