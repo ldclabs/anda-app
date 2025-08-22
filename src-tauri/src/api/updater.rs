@@ -33,27 +33,31 @@ pub async fn restart(app: AppHandle) {
     app.assistant().close().await;
 
     if let Some(app_updater) = app.try_state::<Updater>()
-        && app_updater.info.read().is_some() {
-            // 先尝试用缓存的字节
-            let mut package = app_updater.package.write().take();
+        && app_updater.info.read().is_some()
+    {
+        // 先尝试用缓存的字节
+        let mut package = app_updater.package.write().take();
 
-            if package.is_none() {
-                log::warn!("No update package, downloading...");
-                // 下载阶段使用一个克隆，且不持有锁跨越 await
-                let update_for_download = app_updater.info.read().as_ref().cloned();
-                if let Some(update_for_download) = update_for_download {
-                    package = update_for_download.download(|_, _| {}, || {}).await.ok();
-                }
+        if package.is_none() {
+            log::warn!("No update package, downloading...");
+            // 下载阶段使用一个克隆，且不持有锁跨越 await
+            let update_for_download = app_updater.info.read().as_ref().cloned();
+            if let Some(update_for_download) = update_for_download {
+                package = update_for_download.download(|_, _| {}, || {}).await.ok();
             }
+        }
 
-            if let Some(package) = package {
-                // await 之后再获取一个新的克隆用于安装
-                if let Some(update_for_install) = app_updater.info.read().as_ref().cloned()
-                    && let Err(e) = update_for_install.install(&package) {
-                        log::error!("Failed to install update: {}", e);
-                    }
+        if let Some(package) = package {
+            // await 之后再获取一个新的克隆用于安装
+            // Issue: "Failed to move the new app into place" on MacOS
+            // https://github.com/tauri-apps/plugins-workspace/issues/2455
+            if let Some(update_for_install) = app_updater.info.read().as_ref().cloned()
+                && let Err(e) = update_for_install.install(&package)
+            {
+                log::error!("Failed to install update: {}", e);
             }
-        };
+        }
+    };
 
     // macOS: 用 `open -n -b <bundle id>` 重新启动，避免崩溃提示
     #[cfg(target_os = "macos")]

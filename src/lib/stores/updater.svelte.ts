@@ -1,4 +1,8 @@
+import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri.mock'
 import { invoke } from '@tauri-apps/api/core'
+import { type as osType } from '@tauri-apps/plugin-os'
+
+const ot = isTauriEnvironment() ? osType() : safeOsType()
 
 export interface UpdateInfo {
   current_version: string
@@ -16,7 +20,9 @@ export async function restart(): Promise<void> {
 
 class UpdaterStore {
   static init() {
-    updaterStore.checkUpdateInternal()
+    if (ot == 'windows' || ot == 'linux') {
+      updaterStore.checkUpdateInternal()
+    }
   }
 
   private _info = $state<UpdateInfo | null>(null)
