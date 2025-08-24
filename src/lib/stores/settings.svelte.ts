@@ -85,10 +85,10 @@ export function open_settings_window() {
 }
 
 async function init() {
-  get_settings()
   listen<string>('SettingsChanged', (event) => {
     get_settings()
   })
+  await get_settings()
 }
 
 init().catch((err) => {

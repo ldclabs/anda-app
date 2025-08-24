@@ -1,16 +1,12 @@
 <script lang="ts">
   import { assistantStore } from '$lib/stores/assistant.svelte'
+  import { toastRun } from '$lib/stores/toast.svelte'
   import type { Conversation, KIPLog } from '$lib/types/assistant'
   import { formatDateTime, ID2Cursor, sleep } from '$lib/utils/helper'
   import { scrollIntoView, scrollOnHooks } from '$lib/utils/window'
   import { Button, Modal, Spinner } from 'flowbite-svelte'
-  import { onDestroy, tick } from 'svelte'
+  import { tick } from 'svelte'
 
-  const {
-    view = $bindable<{
-      open: (view: 'kip' | 'conversation', _id?: number) => void
-    }>()
-  } = $props()
   // 全局单例状态管理
   let kipLogs = $state<KIPLog[]>([])
   let conversations = $state<Conversation[]>([])
@@ -21,7 +17,7 @@
   let currentView = $state<'kip' | 'conversation'>('kip')
   let isOpen = $state(false)
 
-  view.open = (view: 'kip' | 'conversation', _id?: number) => {
+  export function openView(view: 'kip' | 'conversation', _id?: number) {
     isOpen = true
     currentView = view
     if (view === 'kip') {
@@ -63,7 +59,7 @@
     if (isLoading) return
 
     isLoading = true
-    try {
+    await toastRun(async () => {
       const result = await assistantStore.listKipLogs(
         _id ? ID2Cursor(_id + 1) : undefined,
         10
@@ -78,18 +74,15 @@
         scrollIntoView(`dm-kiplog-${_id}`, 'instant', 'start')
       }
       await sleep(300)
-    } catch (error) {
-      console.error('Failed to load KIP logs:', error)
-    } finally {
-      isLoading = false
-    }
+    }).finally()
+    isLoading = false
   }
 
   async function loadConversations(_id?: number) {
     if (isLoading) return
 
     isLoading = true
-    try {
+    await toastRun(async () => {
       const result = await assistantStore.listConversations(
         _id ? ID2Cursor(_id + 1) : undefined,
         10
@@ -105,52 +98,48 @@
       }
 
       await sleep(300)
-    } catch (error) {
-      console.error('Failed to load conversations:', error)
-    } finally {
-      isLoading = false
-    }
+    }).finally()
+    isLoading = false
   }
 
-  async function loadPrevKipLogs() {
+  async function loadPrevKipLogs(): Promise<boolean> {
     if (isLoadingPrev || !prevKipCursor) return false
     isLoadingPrev = true
-    try {
+
+    const hasMore = await toastRun(async () => {
       const result = await assistantStore.listKipLogs(prevKipCursor, 10)
+      await sleep(300)
       if (result.result) {
         appendKipLogs(result.result)
         prevKipCursor = result.next_cursor
         return !!prevKipCursor
       }
-      await sleep(300)
-    } catch (error) {
-      console.error('Failed to load more KIP logs:', error)
-    } finally {
-      isLoadingPrev = false
-    }
-    return false
+      throw result.error
+    }).finally()
+
+    isLoadingPrev = false
+    return !!hasMore
   }
 
   async function loadPrevConversations() {
     if (isLoadingPrev || !prevConversationCursor) return false
     isLoadingPrev = true
-    try {
+    const hasMore = await toastRun(async () => {
       const result = await assistantStore.listConversations(
         prevConversationCursor,
         10
       )
+      await sleep(300)
+
       if (result.result) {
         appendConversations(result.result)
         prevConversationCursor = result.next_cursor
         return !!prevConversationCursor
       }
-      await sleep(300)
-    } catch (error) {
-      console.error('Failed to load more conversations:', error)
-    } finally {
-      isLoadingPrev = false
-    }
-    return false
+      throw result.error
+    }).finally()
+    isLoadingPrev = false
+    return !!hasMore
   }
 
   function handleViewChange(view: 'kip' | 'conversation') {
@@ -169,50 +158,52 @@
   let scrollContainer: HTMLDivElement
   let abortScroll: (() => void) | undefined
 
-  function mountScroll() {
-    if (!scrollContainer || abortScroll) return
-
-    abortScroll = scrollOnHooks(scrollContainer, {
-      onTop: () => {
-        if (currentView == 'kip') {
-          loadPrevKipLogs().then((hasMore) => {
-            if (hasMore) {
-              tick().then(() => {
-                scrollContainer!.scrollTop = 100
-              })
-            }
-          })
-        } else {
-          loadPrevConversations().then((hasMore) => {
-            if (hasMore) {
-              tick().then(() => {
-                scrollContainer!.scrollTop = 100
-              })
-            }
-          })
+  function init() {
+    tick().then(() => {
+      abortScroll?.()
+      abortScroll = scrollOnHooks(scrollContainer, {
+        onTop: () => {
+          if (currentView == 'kip') {
+            loadPrevKipLogs().then((hasMore) => {
+              if (hasMore) {
+                tick().then(() => {
+                  scrollContainer!.scrollTop = 100
+                })
+              }
+            })
+          } else {
+            loadPrevConversations().then((hasMore) => {
+              if (hasMore) {
+                tick().then(() => {
+                  scrollContainer!.scrollTop = 100
+                })
+              }
+            })
+          }
+        },
+        onBottom: () => {
+          if (currentView == 'kip') {
+            loadKipLogs()
+          } else {
+            loadConversations()
+          }
         }
-      },
-      onBottom: () => {
-        if (currentView == 'kip') {
-          loadKipLogs()
-        } else {
-          loadConversations()
-        }
-      }
+      })
     })
+
+    return () => {
+      abortScroll?.()
+      abortScroll = undefined
+    }
   }
-
-  $effect(() => {
-    isOpen && mountScroll()
-  })
-
-  onDestroy(() => {
-    abortScroll?.()
-    abortScroll = undefined
-  })
 </script>
 
-<Modal bind:open={isOpen} size="xl" class="h-[90vh] w-full max-w-4xl">
+<Modal
+  {@attach init}
+  bind:open={isOpen}
+  size="xl"
+  class="h-[90vh] w-full max-w-4xl"
+>
   {#snippet header()}
     <div class="flex items-center justify-between">
       <div class="flex gap-2">

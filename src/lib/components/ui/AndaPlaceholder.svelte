@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import AndaLogo from '$lib/components/icons/AndaLogo.svelte'
 
   let { children } = $props()

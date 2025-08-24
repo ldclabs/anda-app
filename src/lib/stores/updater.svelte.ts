@@ -1,6 +1,7 @@
 import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri.mock'
 import { invoke } from '@tauri-apps/api/core'
 import { type as osType } from '@tauri-apps/plugin-os'
+import { toastRun } from './toast.svelte'
 
 const ot = isTauriEnvironment() ? osType() : safeOsType()
 
@@ -42,32 +43,24 @@ class UpdaterStore {
   }
 
   private async checkUpdateInternal() {
-    try {
-      this._info = await check_update()
-      if (this._info) {
-        if (this._info.ready) return
-        setTimeout(async () => {
-          await this.checkUpdateInternal()
-        }, 1000)
-      } else {
-        setTimeout(async () => {
-          await this.checkUpdateInternal()
-        }, 3600 * 1000)
-      }
-    } catch (error) {
-      console.error('Failed to check update', error)
+    this._info = await toastRun(check_update).finally()
+
+    if (this._info) {
+      if (this._info.ready) return
+      setTimeout(() => {
+        this.checkUpdateInternal()
+      }, 1000)
+    } else {
+      setTimeout(() => {
+        this.checkUpdateInternal()
+      }, 3600 * 1000)
     }
   }
 
   async restartApp() {
     this._isRestarting = true
-    try {
-      await restart()
-    } catch (error) {
-      console.error('Failed to restart', error)
-    } finally {
-      this._isRestarting = false
-    }
+    await toastRun(restart).finally()
+    this._isRestarting = false
   }
 }
 

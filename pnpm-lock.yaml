@@ -23,9 +23,6 @@ importers:
       '@tauri-apps/plugin-updater':
         specifier: ~2.9.0
         version: 2.9.0
-      '@types/whatwg-mimetype':
-        specifier: ^3.0.2
-        version: 3.0.2
       cborg:
         specifier: ^4.2.13
         version: 4.2.13
@@ -78,6 +75,9 @@ importers:
       '@types/prismjs':
         specifier: ^1.26.5
         version: 1.26.5
+      '@types/whatwg-mimetype':
+        specifier: ^3.0.2
+        version: 3.0.2
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.40.0
         version: 8.40.0(@typescript-eslint/parser@8.40.0(eslint@9.33.0(jiti@2.5.1))(typescript@5.9.2))(eslint@9.33.0(jiti@2.5.1))(typescript@5.9.2)
@@ -106,8 +106,8 @@ importers:
         specifier: ^3.1.2
         version: 3.1.2(rollup@4.46.2)
       flowbite-svelte:
-        specifier: 1.11.8
-        version: 1.11.8(rollup@4.46.2)(svelte@5.38.2)(tailwindcss@4.1.12)
+        specifier: 1.12.6
+        version: 1.12.6(rollup@4.46.2)(svelte@5.38.2)(tailwindcss@4.1.12)
       flowbite-svelte-icons:
         specifier: ^2.3.0
         version: 2.3.0(svelte@5.38.2)
@@ -1790,8 +1790,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  flowbite-svelte@1.11.8:
-    resolution: {integrity: sha512-tTOogclVeu5DtgB9GV1QFpt0VU4MKQcYtkPZpd6JGdtBaT/uygoXEdRviZUdk4tptTFZqUYesODEWHoJfhvL4g==}
+  flowbite-svelte@1.12.6:
+    resolution: {integrity: sha512-4Kaj20ogUfYMdgW8i+dFQn4d6UezJg2HxJL645HEJMXs5UoBFB+nXC8W6wtx5SVE1kAGuCkaddpc19G8AD5+pA==}
     peerDependencies:
       svelte: ^5.29.0
       tailwindcss: ^4.1.4
@@ -4666,7 +4666,7 @@ snapshots:
       svelte: 5.38.2
       tailwind-merge: 3.3.1
 
-  flowbite-svelte@1.11.8(rollup@4.46.2)(svelte@5.38.2)(tailwindcss@4.1.12):
+  flowbite-svelte@1.12.6(rollup@4.46.2)(svelte@5.38.2)(tailwindcss@4.1.12):
     dependencies:
       '@floating-ui/dom': 1.7.3
       '@floating-ui/utils': 0.2.10

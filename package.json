@@ -1,6 +1,6 @@
 {
   "name": "anda_ai",
-  "version": "0.2.8",
+  "version": "0.3.0",
   "description": "",
   "type": "module",
   "scripts": {
@@ -52,7 +52,7 @@
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-svelte": "^3.11.0",
     "flowbite": "^3.1.2",
-    "flowbite-svelte": "1.11.8",
+    "flowbite-svelte": "1.12.6",
     "flowbite-svelte-icons": "^2.3.0",
     "prettier": "^3.6.2",
     "prettier-plugin-svelte": "^3.4.0",

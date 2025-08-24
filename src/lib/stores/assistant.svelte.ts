@@ -14,6 +14,7 @@ import { isThinking } from '$lib/types/assistant'
 import { sleep } from '$lib/utils/helper'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
+import { toastRun } from './toast.svelte'
 
 const ASSISTANT_EVENT = 'AssistantReady'
 
@@ -212,7 +213,8 @@ class AssistantStore {
     if (!this._prevConversationCursor || this._isLoadingPrev) return false
 
     this._isLoadingPrev = true
-    try {
+
+    let rt = await toastRun(async () => {
       const [_, res]: [void, ToolOutput<Response<Conversation[]>>] =
         await Promise.all([
           sleep(300),
@@ -237,20 +239,17 @@ class AssistantStore {
         this._prevConversationCursor = res.output.next_cursor
         return !!this._prevConversationCursor
       }
-    } catch (error) {
-      console.error('ListPrevConversations', error)
-      throw error
-    } finally {
-      this._isLoadingPrev = false
-    }
+    }).finally()
 
-    return false
+    this._isLoadingPrev = false
+    return rt ?? false
   }
 
   async loadLatestConversations() {
     if (this._isLoading) return
     this._isLoading = true
-    try {
+
+    await toastRun(async () => {
       const res: ToolOutput<Response<Conversation[]>> = await tool_call({
         name: 'memory_api',
         args: {
@@ -284,12 +283,8 @@ class AssistantStore {
           ...conversations
         ]
       }
-    } catch (error) {
-      console.error('loadLatestConversations', error)
-      throw error
-    } finally {
-      this._isLoading = false
-    }
+    }).finally()
+    this._isLoading = false
   }
 
   async chat(content: string, resources?: Resource[]) {
@@ -297,7 +292,7 @@ class AssistantStore {
     if (!prompt) return
 
     this._isSubmitting = true
-    try {
+    await toastRun(async () => {
       const res = await agent_run({
         name: 'assistant',
         prompt,
@@ -317,12 +312,31 @@ class AssistantStore {
       if (res.failed_reason) {
         throw res.failed_reason
       }
-    } catch (error) {
-      console.error('AssistantStore.chat', error, content, resources)
-      throw error
-    } finally {
-      this._isSubmitting = false
-    }
+    }).finally()
+    this._isSubmitting = false
+  }
+
+  async stop() {
+    const _id = this._isThinking
+    if (_id == 0) return
+    await toastRun(async () => {
+      const res: ToolOutput<Response<Conversation>> = await tool_call({
+        name: 'memory_api',
+        args: {
+          _type: 'StopConversation',
+          _id
+        } as MemoryToolArgs
+      })
+
+      if (res.output.error) {
+        console.error('GetConversation', res.output.error)
+        throw res.output.error
+      }
+
+      const conversation = res.output.result!
+      this.addConversation(conversation)
+    }).finally()
+    this._isThinking = 0
   }
 }
 

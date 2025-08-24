@@ -10,11 +10,10 @@
     type ModelProvider,
     type Settings
   } from '$lib/stores/settings.svelte'
-  import { Input, Select, Toast } from 'flowbite-svelte'
+  import { toastRun, triggerToast } from '$lib/stores/toast.svelte'
+  import { Input, Select } from 'flowbite-svelte'
   import {
-    CheckCircleOutline,
     CogOutline,
-    ExclamationCircleOutline,
     EyeOutline,
     EyeSlashOutline,
     GlobeOutline,
@@ -24,11 +23,6 @@
 
   // 基础状态
   let isLoading = $state(false)
-  let notification = $state<{
-    type: 'success' | 'error'
-    message: string
-  } | null>(null)
-  let toastStatus = $derived.by(() => !!notification)
   let activeSection = $state(page.url.searchParams.get('section') || 'general')
 
   // 计算属性
@@ -131,12 +125,9 @@
     }
   })
 
-  // AI 配置保存
   async function saveAIProvider() {
-    try {
-      isLoading = true
-
-      // 保存首选提供商
+    isLoading = true
+    await toastRun(async () => {
       await set_secret_setting('preferred_provider', currentProvider)
       await set_secret_setting(currentProvider, {
         model: providerState.model.trim(),
@@ -144,38 +135,28 @@
         api_base: providerState.api_base?.trim() || undefined
       })
 
-      showNotification('success', t('settings.saved'))
-    } catch (error) {
-      console.error('Failed to save AI config:', error)
-      showNotification('error', t('settings.save_failed'))
-    } finally {
-      isLoading = false
-    }
+      triggerToast({
+        type: 'success',
+        message: t('settings.saved')
+      })
+    }, t('settings.save_failed')).finally()
+
+    isLoading = false
   }
 
-  // 工具函数
-  function showNotification(type: 'success' | 'error', message: string) {
-    notification = { type, message }
-    setTimeout(() => {
-      notification = null
-    }, 6000)
-  }
-
-  // 设置更新函数
   async function updateSetting<K extends keyof Settings>(
     key: K,
     value: Settings[K]
   ) {
-    try {
-      isLoading = true
+    isLoading = true
+    await toastRun(async () => {
       await set_setting(key, value)
-      showNotification('success', t('settings.saved'))
-    } catch (error) {
-      console.error('Failed to update setting:', error)
-      showNotification('error', t('settings.save_failed'))
-    } finally {
-      isLoading = false
-    }
+      triggerToast({
+        type: 'success',
+        message: t('settings.saved')
+      })
+    }, t('settings.save_failed')).finally()
+    isLoading = false
   }
 
   function handleProxyChange(event: Event) {
@@ -184,9 +165,9 @@
   }
 
   // 组件挂载时初始化
-  onMount(async () => {
-    try {
-      isLoading = true
+  onMount(() => {
+    isLoading = true
+    const rt = toastRun(async () => {
       await Promise.all([
         get_secret_setting('preferred_provider'),
         get_secret_setting('gemini'),
@@ -199,12 +180,10 @@
 
       await tick() // 等待 currentProvider 状态更新
       selectProvider()
-    } catch (error) {
-      console.error('Failed to load settings:', error)
-      showNotification('error', t('settings.load_failed'))
-    } finally {
       isLoading = false
-    }
+    }, t('settings.load_failed'))
+
+    return rt.abort
   })
 </script>
 
@@ -512,42 +491,5 @@
         </div>
       {/if}
     </div>
-
-    <!-- 通知 Toast -->
-    <Toast
-      dismissable={false}
-      color={notification?.type === 'success' ? 'green' : 'red'}
-      class="mx-auto mt-4"
-      bind:toastStatus
-    >
-      {#snippet icon()}
-        {#if notification!.type === 'success'}
-          <CheckCircleOutline class="h-4 w-4" />
-        {:else}
-          <ExclamationCircleOutline class="h-4 w-4" />
-        {/if}
-      {/snippet}
-      {notification?.message}
-    </Toast>
   </div>
 </div>
-
-<style>
-  /* 自定义滚动条样式 */
-  :global(.overflow-auto::-webkit-scrollbar) {
-    width: 6px;
-  }
-
-  :global(.overflow-auto::-webkit-scrollbar-track) {
-    background: transparent;
-  }
-
-  :global(.overflow-auto::-webkit-scrollbar-thumb) {
-    background: rgba(156, 163, 175, 0.5);
-    border-radius: 3px;
-  }
-
-  :global(.overflow-auto::-webkit-scrollbar-thumb:hover) {
-    background: rgba(156, 163, 175, 0.7);
-  }
-</style>

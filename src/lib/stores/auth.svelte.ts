@@ -52,7 +52,7 @@ export const authStore = $state({
 })
 
 let prevTimer: number | null = null
-export async function signIn() {
+export async function signIn(callback?: (success: boolean) => void) {
   authStore.isSigningIn = true
   await invoke('sign_in')
 
@@ -60,11 +60,19 @@ export async function signIn() {
   prevTimer = setTimeout(() => {
     authStore.signInFallback = authStore.isSigningIn
     authStore.isSigningIn = false
+    callback?.(authStore.auth.isAuthenticated())
   }, 10000)
 }
 
 export async function signInByUrl(url: string) {
-  await invoke('sign_in_by_url', { url })
+  authStore.isSigningIn = true
+  try {
+    return await invoke('sign_in_by_url', { url })
+  } catch (err) {
+    throw err
+  } finally {
+    authStore.isSigningIn = false
+  }
 }
 
 export async function logout() {

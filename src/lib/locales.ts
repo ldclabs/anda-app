@@ -247,5 +247,9 @@ export const translations: Record<string, Record<string, string>> = {
   'assistant.hello.description': {
     en: '---\n\nI am an AI companion that evolves with you.\n\n● **Shared Growth**\nForged by [KIP](https://github.com/ldclabs/KIP), my unique identity will be shaped by our conversations.\n\n● **Web3 Identity**\nWith [ICP](https://internetcomputer.org/) authentication, we can access the new Agentic Network.',
     zh: '---\n\n我是一个为你而生的进化型 AI 伙伴。\n\n● **共同成长**\n基于 [KIP](https://github.com/ldclabs/KIP) 构建，我们的会话将塑造独一无二的我。\n\n● **Web3 身份**\n使用 [ICP](https://internetcomputer.org/) 身份验证，进入全新的智能体网络。'
+  },
+  'assistant.file_size_too_large': {
+    en: 'File size exceeds 2MB limit',
+    zh: '文件大小超过 2MB 限制'
   }
 }

@@ -1,3 +1,4 @@
+use candid::Principal;
 use ciborium::from_reader;
 use ic_agent::Identity;
 use ic_auth_types::{ByteBufB64, SignedDelegationCompact};
@@ -220,7 +221,7 @@ impl<R: Runtime> DeepLinkService<R> {
         }
     }
 
-    pub fn on_sign_in(&self, res: DeepLinkResponse) -> Result<()> {
+    pub fn on_sign_in(&self, res: DeepLinkResponse) -> Result<Principal> {
         let res: SignInResponse = res.get_payload()?;
         let auth = InternetIdentityAuth::from(res);
         let secret_state = self.app.state::<SecretStateCell>();
@@ -241,7 +242,7 @@ impl<R: Runtime> DeepLinkService<R> {
             principal = principal.to_text();
             "success");
 
-        Ok(())
+        Ok(principal)
     }
 }
 

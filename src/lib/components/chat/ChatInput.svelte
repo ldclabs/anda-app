@@ -1,12 +1,13 @@
 <script lang="ts">
   import { t } from '$lib/stores/i18n'
+  import { triggerToast } from '$lib/stores/toast.svelte'
   import { type Resource } from '$lib/types/assistant'
   import { fileToBase64Url, formatSize } from '$lib/utils/helper'
   import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri.mock'
   import { sha3_256 } from '@ldclabs/cose-ts/hash'
   import { bytesToBase64Url } from '@ldclabs/cose-ts/utils'
   import { type as osType } from '@tauri-apps/plugin-os'
-  import { Button } from 'flowbite-svelte'
+  import { Button, Spinner } from 'flowbite-svelte'
   import {
     CirclePlusOutline,
     CloseOutline,
@@ -14,7 +15,8 @@
     FileLinesOutline,
     FileMusicOutline,
     FileOutline,
-    FileVideoOutline
+    FileVideoOutline,
+    StopSolid
   } from 'flowbite-svelte-icons'
   import mime from 'mime'
   import { onDestroy } from 'svelte'
@@ -46,13 +48,17 @@
   let {
     user,
     onSend,
+    onStop,
     onInput,
-    disabled = false
+    disabled,
+    isRunning
   }: {
     user: string
     onSend: (message: string, resource: Resource[]) => void
+    onStop?: () => void
     onInput?: (event: Event) => void
     disabled?: boolean
+    isRunning?: boolean
   } = $props()
 
   const messageCacheKey = `MessageDraft:${user}`
@@ -64,8 +70,15 @@
   let submitting = $state(false)
 
   async function addFile(file: File) {
-    const bytes = await file.bytes()
+    if (file.size > 2 * 1024 * 1024) {
+      triggerToast({
+        type: 'error',
+        message: t('assistant.file_size_too_large')
+      })
+      return
+    }
 
+    const bytes = await file.bytes()
     const mimeType = file.type || mime.getType(file.name) || ''
     const tags = []
     if (mimeType) {
@@ -145,6 +158,11 @@
   }
 
   function handleSend() {
+    if (isRunning) {
+      onStop?.()
+      return
+    }
+
     const trimmedMessage = message.trim()
     if (trimmedMessage && !disabled) {
       onSend(trimmedMessage, $state.snapshot(files))
@@ -188,30 +206,35 @@
 
 {#snippet fileCard(file: Resource)}
   {@const Icon = fileIcon(file.mime_type!)}
-  <div class="flex items-center gap-2 p-1">
-    <span class="grid place-items-center text-gray-600 dark:text-gray-300">
-      <Icon size="md" />
-    </span>
+  <div class="grid grid-cols-[1fr_auto] p-1">
+    <div class="flex min-w-0 flex-row items-center gap-2">
+      <span class="grid place-items-center text-gray-600 dark:text-gray-300">
+        <Icon size="md" />
+      </span>
 
-    <span>{file.mime_type}</span>
-    <span>{formatSize(file.size!)}</span>
-    <span class="truncate">{file.name}</span>
+      <span>{file.mime_type}</span>
+      <span>{formatSize(file.size!)}</span>
+      <p class="min-w-0 flex-1 truncate">{file.name}</p>
+    </div>
     <Button
       onclick={() => removeFile(file.hash!)}
       color="alternative"
       size="xs"
-      class="shadow-0 ml-4 rounded-full border-0 p-1"
+      class="shadow-0 rounded-full border-0 p-1"
     >
       <CloseOutline size="lg" />
     </Button>
   </div>
 {/snippet}
 
-<div class="mt-6 bg-white/90 px-8 text-gray-500 dark:bg-gray-800/90">
-  {#each files as file (file.hash)}
-    {@render fileCard(file)}
-  {/each}
-</div>
+{#if files.length > 0}
+  <div class="mt-6 bg-white/90 pr-2 pl-8 text-gray-500 dark:bg-gray-800/90">
+    {#each files as file (file.hash)}
+      {@render fileCard(file)}
+    {/each}
+  </div>
+{/if}
+
 <div
   class="relative grid grid-cols-[1fr_auto] items-end gap-4 bg-transparent py-4 pr-4 pl-8"
 >
@@ -241,17 +264,25 @@
   <div class="flex items-center gap-2">
     <Button
       onclick={openFilePicker}
+      {disabled}
       color="alternative"
-      class="shadow-0 rounded-full p-1"
+      class="shadow-0 rounded-full p-1 disabled:text-gray-500/50"
     >
       <CirclePlusOutline size="lg" />
     </Button>
     <Button
       onclick={handleSend}
-      disabled={disabled || !message.trim()}
-      class="flex items-center justify-center rounded-4xl border-0 px-4 py-2"
+      disabled={!isRunning && (disabled || !message.trim())}
+      class="flex transform-gpu items-center justify-center rounded-4xl border-0 p-2"
     >
-      <span>{t('assistant.run')} <b>{shortcutLabel}</b></span>
+      {#if isRunning}
+        <div class="relative -m-1 grid size-8 place-items-center">
+          <Spinner class="absolute inset-0 size-8 text-gray-500/50" />
+          <StopSolid size="md" class="z-10" />
+        </div>
+      {:else}
+        <span class="px-2">{t('assistant.run')} <b>{shortcutLabel}</b></span>
+      {/if}
     </Button>
   </div>
 </div>

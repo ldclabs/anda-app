@@ -352,8 +352,22 @@ export interface EngineCard {
 export type MemoryToolArgs =
   | {
       /** Get a conversation by ID */
+      _type: 'GetResource'
+      /** The ID of the resource to get */
+      _id: number
+      /** The ID of the conversation where the resource is located */
+      conversation: number
+    }
+  | {
+      /** Get a conversation by ID */
       _type: 'GetConversation'
       /** The ID of the conversation to get */
+      _id: number
+    }
+  | {
+      /** Get a conversation by ID */
+      _type: 'StopConversation'
+      /** The ID of the conversation to stop */
       _id: number
     }
   | {

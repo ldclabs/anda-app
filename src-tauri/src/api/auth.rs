@@ -42,12 +42,10 @@ pub async fn sign_in(app: AppHandle) -> Result<bool> {
 }
 
 #[tauri::command]
-pub async fn sign_in_by_url(app: AppHandle, url: String) -> Result<bool> {
-    if let Ok(dr) = DeepLinkResponse::from_str(&url) {
-        app.deep_link_service().on_sign_in(dr)?;
-    }
-
-    Ok(true)
+pub async fn sign_in_by_url(app: AppHandle, url: String) -> Result<Principal> {
+    let dr = DeepLinkResponse::from_str(&url)?;
+    let id = app.deep_link_service().on_sign_in(dr)?;
+    Ok(id)
 }
 
 #[tauri::command]

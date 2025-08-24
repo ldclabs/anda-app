@@ -3,6 +3,7 @@
   import DiagnosisModal from '$lib/components/diagnosis/DiagnosisModal.svelte'
   import { authStore, signIn, signInByUrl } from '$lib/stores/auth.svelte'
   import { t } from '$lib/stores/i18n'
+  import { toastRun } from '$lib/stores/toast.svelte'
   import { updaterStore } from '$lib/stores/updater.svelte'
   import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri.mock'
   import { type as osType } from '@tauri-apps/plugin-os'
@@ -31,74 +32,77 @@
   const ot = isTauriEnvironment() ? osType() : safeOsType()
 
   let { children } = $props()
-  let diagnosisModal = $state<{
-    open: (view: 'kip' | 'conversation', _id?: number) => void
-  }>({ open: (_view) => {} })
 
   let signInModal = $state(false)
   let isMobile = $state(ot === 'ios' || ot === 'android')
   let activeUrl = $state(page.url.pathname)
+  let signInUrl = $state('')
+
+  let diagnosisModalRef = $state<DiagnosisModal>()
 
   function onSignInClick() {
     if (authStore.signInFallback) {
       signInModal = true
       return
     }
-    signIn()
+    onSignIn()
   }
 
-  function onSignInAction({
-    action,
-    data
-  }: {
-    action: string
-    data: FormData
-  }) {
-    const signInUrl = data.get('signInUrl') as string
-    data.delete('signInUrl')
-    signInByUrl(signInUrl)
+  function onSignIn() {
+    signIn((success) => {
+      if (!success) {
+        signInModal = true
+      }
+    })
+  }
+
+  function onSignInAction() {
+    toastRun(async () => {
+      await signInByUrl(signInUrl)
+      signInModal = false
+    }).finally(() => {
+      signInUrl = ''
+    })
   }
 
   $effect(() => {
     activeUrl = page.url.pathname
   })
 
-  setContext('diagnosisModalState', () => diagnosisModal)
+  setContext('diagnosisModalState', () => diagnosisModalRef)
   setContext('signInHandler', onSignInClick)
 </script>
 
+<Modal bind:open={signInModal} size="xs">
+  <div class="flex flex-col space-y-6">
+    <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white"
+      >{t('app.sign_in_fallback.title')}</h3
+    >
+    <Label class="space-y-2">
+      <Input
+        type="text"
+        name="signInUrl"
+        bind:value={signInUrl}
+        placeholder="https://anda.ai/deeplink/?os=xx&action=SignIn..."
+        required
+      />
+    </Label>
+    <Button disabled={authStore.isSigningIn} onclick={onSignInAction}
+      >{t('app.sign_in_fallback.by_url')}</Button
+    >
+    <Button
+      color="alternative"
+      disabled={authStore.isSigningIn}
+      onclick={onSignIn}
+    >
+      <span>{t('app.sign_in_fallback.again')}</span>
+      {#if authStore.isSigningIn}
+        <Spinner class="ms-3 inline-flex" size="4" />
+      {/if}
+    </Button>
+  </div>
+</Modal>
 {#key authStore.auth.id}
-  <Modal form bind:open={signInModal} size="xs" onaction={onSignInAction}>
-    <div class="flex flex-col space-y-6">
-      <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white"
-        >{t('app.sign_in_fallback.title')}</h3
-      >
-      <Label class="space-y-2">
-        <Input
-          type="text"
-          name="signInUrl"
-          placeholder="https://anda.ai/deeplink/?os=xx&action=SignIn..."
-          required
-        />
-      </Label>
-      <Button type="submit" value="sign_in"
-        >{t('app.sign_in_fallback.by_url')}</Button
-      >
-      <Button
-        color="alternative"
-        disabled={authStore.isSigningIn}
-        onclick={() => {
-          signIn()
-          signInModal = false
-        }}
-      >
-        <span>{t('app.sign_in_fallback.again')}</span>
-        {#if authStore.isSigningIn}
-          <Spinner class="ms-3 inline-flex" size="4" />
-        {/if}
-      </Button>
-    </div>
-  </Modal>
   {#if isMobile}
     <main class="relative grid h-dvh w-dvw grid-rows-[1fr_auto]">
       <div class="relative w-full overflow-auto">
@@ -133,7 +137,7 @@
             {/if}
           </BottomNavItem>
         {:else}
-          <BottomNavItem btnName={t('app.sign_in')} onclick={signIn}>
+          <BottomNavItem btnName={t('app.sign_in')} onclick={onSignIn}>
             <UserCircleOutline
               size="xl"
               class={authStore.isSigningIn ? 'animate-bounce' : ''}
@@ -232,7 +236,7 @@
       <div class="relative h-full w-full overflow-auto dark:bg-gray-900">
         {@render children()}
       </div>
-      <DiagnosisModal bind:view={diagnosisModal} />
+      <DiagnosisModal bind:this={diagnosisModalRef} />
     </main>
   {/if}
 {/key}

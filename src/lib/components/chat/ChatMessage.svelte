@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type DiagnosisModal from '$lib/components/diagnosis/DiagnosisModal.svelte'
   import { t } from '$lib/stores/i18n'
   import type { ChatMessage } from '$lib/types/assistant'
   import { formatDateTime } from '$lib/utils/helper'
@@ -14,18 +15,12 @@
 
   let { message }: { message: ChatMessage } = $props()
   const [content, hook] = renderMarkdown(message.content)
-  const diagnosisModal = getContext<
-    () => { open: (view: 'kip' | 'conversation', _id?: number) => void }
-  >('diagnosisModalState')()
+  const diagnosisModal = getContext<() => DiagnosisModal>('diagnosisModalState')
 
   let text = $state('')
   let origin = $state(message.content)
   let textSuccess = $state(false)
   let mdSuccess = $state(false)
-
-  function handleDiagnosis(_id?: number) {
-    diagnosisModal.open('conversation', _id)
-  }
 
   onMount(async () => {
     await hook()
@@ -53,7 +48,8 @@
       {#if message.role === 'user'}
         <button
           class="flex items-center rounded-sm p-2 text-base font-normal text-gray-500 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-          onclick={() => handleDiagnosis(message.conversation)}
+          onclick={() =>
+            diagnosisModal().openView('conversation', message.conversation)}
           ><InfoCircleOutline size="md" />
         </button>
       {/if}

@@ -2,6 +2,7 @@
   import AndaPlaceholder from '$lib/components/ui/AndaPlaceholder.svelte'
   import { authStore, get_user, logout } from '$lib/stores/auth.svelte'
   import { t } from '$lib/stores/i18n'
+  import { toastRun } from '$lib/stores/toast.svelte'
   import { shortId } from '$lib/utils/helper'
   import { renderMarkdown } from '$lib/utils/markdown'
   import { Avatar, Button, Clipboard, Heading, Spinner } from 'flowbite-svelte'
@@ -18,30 +19,20 @@
   let isLoading = $state(false)
   let isLoggingOut = $state(false)
 
-  onMount(async () => {
+  onMount(() => {
     if (authStore.auth.isAuthenticated()) {
       isLoading = !userInfo
-      try {
-        await get_user()
-      } catch (error) {
-        console.error('Failed to get user info:', error)
-      } finally {
+      toastRun(get_user).finally(() => {
         isLoading = false
-      }
-    } else {
-      isLoading = false
+      })
     }
   })
 
-  async function handleLogout() {
+  function handleLogout() {
     isLoggingOut = true
-    try {
-      await logout()
-    } catch (error) {
-      console.error('Logout failed:', error)
-    } finally {
+    toastRun(logout).finally(() => {
       isLoggingOut = false
-    }
+    })
   }
 </script>
 

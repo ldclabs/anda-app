@@ -103,7 +103,9 @@
       <ChatInput
         user={authStore.auth.id}
         onSend={handleSendMessage}
+        onStop={() => assistantStore.stop()}
         disabled={assistantStore.isSubmitting || assistantStore.isThinking > 0}
+        isRunning={assistantStore.isThinking > 0}
       />
       {#if !assistantStore.isReady}
         <div
