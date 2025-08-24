@@ -5,6 +5,7 @@
   import { authStore } from '$lib/stores/auth.svelte'
   import { t } from '$lib/stores/i18n'
   import { open_settings_window } from '$lib/stores/settings.svelte'
+  import { type Resource } from '$lib/types/assistant'
   import { renderMarkdown } from '$lib/utils/markdown'
   import { scrollIntoView, scrollOnHooks } from '$lib/utils/window'
   import { Spinner } from 'flowbite-svelte'
@@ -52,8 +53,8 @@
     return abortScroll
   })
 
-  function handleSendMessage(message: string) {
-    assistantStore.chat(message)
+  function handleSendMessage(message: string, resources: Resource[]) {
+    assistantStore.chat(message, resources)
   }
 </script>
 

@@ -17,6 +17,18 @@ export function formatDateTime(ts: bigint | number): string {
   return new Date(t).toLocaleDateString()
 }
 
+export function formatSize(bytes: number | BigInt): string {
+  const n = Number(bytes)
+  if (n < 1024) {
+    return `${n}B`
+  } else if (n < 1024 * 1024) {
+    return `${(n / 1024).toFixed(2)}KB`
+  } else if (n < 1024 * 1024 * 1024) {
+    return `${(n / 1024 / 1024).toFixed(2)}MB`
+  }
+  return `${(n / 1024 / 1024 / 1024).toFixed(2)}GB`
+}
+
 export function shortId(id: string, long: boolean = false): string {
   if (long) {
     return id.length > 28 ? id.slice(0, 14) + '...' + id.slice(-14) : id
@@ -26,4 +38,24 @@ export function shortId(id: string, long: boolean = false): string {
 
 export function ID2Cursor(_id: number): string {
   return bytesToBase64Url(encode(_id))
+}
+
+// 高性能文件转 base64url
+export async function fileToBase64Url(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      if (reader.result) {
+        const base64 = (reader.result as string)
+          .split(',')[1]
+          .replaceAll('+', '-')
+          .replaceAll('/', '_')
+          .replaceAll('=', '')
+        resolve(base64)
+      } else {
+        reject(reader.error)
+      }
+    }
+    reader.readAsDataURL(blob)
+  })
 }

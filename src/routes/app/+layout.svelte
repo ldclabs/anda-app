@@ -29,13 +29,13 @@
 
   // Safe OS type detection
   const ot = isTauriEnvironment() ? osType() : safeOsType()
-  const diagnosisModalState = $state({
-    open: (view: 'kip' | 'conversation', _id?: number) => {}
-  })
-
-  let signInModal = $state(false)
 
   let { children } = $props()
+  let diagnosisModal = $state<{
+    open: (view: 'kip' | 'conversation', _id?: number) => void
+  }>({ open: (_view) => {} })
+
+  let signInModal = $state(false)
   let isMobile = $state(ot === 'ios' || ot === 'android')
   let activeUrl = $state(page.url.pathname)
 
@@ -59,11 +59,12 @@
     signInByUrl(signInUrl)
   }
 
-  setContext('diagnosisModalState', diagnosisModalState)
-  setContext('signInHandler', onSignInClick)
   $effect(() => {
     activeUrl = page.url.pathname
   })
+
+  setContext('diagnosisModalState', () => diagnosisModal)
+  setContext('signInHandler', onSignInClick)
 </script>
 
 {#key authStore.auth.id}
@@ -148,9 +149,11 @@
         backdrop={false}
         alwaysOpen={true}
         class="anda-nav relative h-full"
-        divClass="grid grid-rows-[1fr_auto] h-full"
-        activeClass="p-2"
-        nonActiveClass="p-2"
+        classes={{
+          div: 'grid grid-rows-[1fr_auto] h-full',
+          nonactive: 'p-2',
+          active: 'p-2'
+        }}
       >
         <SidebarGroup>
           <SidebarItem label={t('assistant.title')} href="/app/assistant">
@@ -229,7 +232,7 @@
       <div class="relative h-full w-full overflow-auto dark:bg-gray-900">
         {@render children()}
       </div>
-      <DiagnosisModal callback={diagnosisModalState} />
+      <DiagnosisModal bind:view={diagnosisModal} />
     </main>
   {/if}
 {/key}

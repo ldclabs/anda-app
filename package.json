@@ -29,7 +29,9 @@
     "katex": "^0.16.22",
     "markdown-it": "^14.1.0",
     "mermaid": "^11.10.0",
-    "prismjs": "^1.30.0"
+    "mime": "^4.0.7",
+    "prismjs": "^1.30.0",
+    "whatwg-mimetype": "^4.0.0"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.9",
@@ -40,6 +42,7 @@
     "@tauri-apps/cli": "^2",
     "@types/markdown-it": "^14.1.2",
     "@types/prismjs": "^1.26.5",
+    "@types/whatwg-mimetype": "^3.0.2",
     "@typescript-eslint/eslint-plugin": "^8.40.0",
     "@typescript-eslint/parser": "^8.40.0",
     "autoprefixer": "^10.4.21",

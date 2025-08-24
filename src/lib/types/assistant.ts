@@ -150,7 +150,6 @@ export type MetadataMap = Record<string, Json>
 
 /**
  * 资源对象（anda_db_schema::Resource）
- * Rust: #[serde(skip_serializing_if = "Option::is_none")] => 序列化缺省时可被省略，因此在 TS 中用可选属性表示
  */
 export interface Resource {
   /** 唯一 ID，0 表示待创建 */
@@ -165,12 +164,12 @@ export interface Resource {
   uri?: string
   /** MIME 类型 */
   mime_type?: string
-  /** 二进制数据（base64），提交创建时可带；返回常被清空以节省体积 */
-  blob?: Uint8Array
+  /** 二进制数据（base64 url 编码），提交创建时可带；返回常被清空以节省体积 */
+  blob?: string
   /** 字节大小 */
   size?: number
-  /** SHA3-256 哈希（base64） */
-  hash?: Uint8Array
+  /** SHA3-256 哈希（base64 url 编码） */
+  hash?: string
   /** 自定义元数据（包含 user, created_at 等） */
   metadata?: MetadataMap
 }

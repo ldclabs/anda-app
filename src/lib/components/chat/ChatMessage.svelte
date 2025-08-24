@@ -14,16 +14,17 @@
 
   let { message }: { message: ChatMessage } = $props()
   const [content, hook] = renderMarkdown(message.content)
-  const diagnosisModalState: {
-    open: (view: 'kip' | 'conversation', _id?: number) => void
-  } = getContext('diagnosisModalState')
+  const diagnosisModal = getContext<
+    () => { open: (view: 'kip' | 'conversation', _id?: number) => void }
+  >('diagnosisModalState')()
 
   let text = $state('')
+  let origin = $state(message.content)
   let textSuccess = $state(false)
   let mdSuccess = $state(false)
 
   function handleDiagnosis(_id?: number) {
-    diagnosisModalState.open('conversation', _id)
+    diagnosisModal.open('conversation', _id)
   }
 
   onMount(async () => {
@@ -69,7 +70,7 @@
         )}
       </Clipboard>
       <Clipboard
-        bind:value={message.content}
+        bind:value={origin}
         bind:success={mdSuccess}
         size="sm"
         color="alternative"

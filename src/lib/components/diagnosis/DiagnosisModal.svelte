@@ -6,10 +6,10 @@
   import { Button, Modal, Spinner } from 'flowbite-svelte'
   import { onDestroy, tick } from 'svelte'
 
-  let {
-    callback
-  }: {
-    callback: { open: (view: 'kip' | 'conversation', _id?: number) => void }
+  const {
+    view = $bindable<{
+      open: (view: 'kip' | 'conversation', _id?: number) => void
+    }>()
   } = $props()
   // 全局单例状态管理
   let kipLogs = $state<KIPLog[]>([])
@@ -21,7 +21,7 @@
   let currentView = $state<'kip' | 'conversation'>('kip')
   let isOpen = $state(false)
 
-  callback.open = (view: 'kip' | 'conversation', _id?: number) => {
+  view.open = (view: 'kip' | 'conversation', _id?: number) => {
     isOpen = true
     currentView = view
     if (view === 'kip') {
