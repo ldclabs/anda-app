@@ -21,7 +21,7 @@ export async function restart(): Promise<void> {
 
 class UpdaterStore {
   static init() {
-    if (ot == 'windows' || ot == 'linux') {
+    if (ot == 'macos' || ot == 'windows' || ot == 'linux') {
       updaterStore.checkUpdateInternal()
     }
   }
