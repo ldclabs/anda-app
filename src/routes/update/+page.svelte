@@ -56,7 +56,6 @@
             class="text-primary-500 flex flex-row items-center gap-2"
             onclick={(e) => {
               e.preventDefault()
-              console.log('openUrl')
               openUrl('https://github.com/ldclabs/anda-app/releases')
             }}
           >
