@@ -23,7 +23,7 @@
   import MIMEType from 'whatwg-mimetype'
 
   const ot = isTauriEnvironment() ? osType() : safeOsType()
-  const shortcutLabel = ot === 'macos' ? '⌘ ↵' : 'Ctrl ↵'
+  const shortcutLabel = ot === 'macos' ? '⌘ ⏎' : 'Ctrl ⏎'
   const isSubmitEvent =
     ot === 'macos'
       ? (event: KeyboardEvent) => {
@@ -273,7 +273,7 @@
     <Button
       onclick={handleSend}
       disabled={!isRunning && (disabled || !message.trim())}
-      class="flex transform-gpu items-center justify-center rounded-4xl border-0 p-2"
+      class="flex items-center justify-center rounded-4xl border-0 p-2"
     >
       {#if isRunning}
         <div class="relative -m-1 grid size-8 place-items-center">

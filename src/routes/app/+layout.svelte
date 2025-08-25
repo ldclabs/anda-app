@@ -216,18 +216,22 @@
                 onclick={() => updaterStore.restartApp()}
                 disabled={updaterStore.isDownloading ||
                   updaterStore.isRestarting}
-                ><RefreshOutline
-                  size="lg"
-                  color="green"
-                  class={updaterStore.isDownloading ? 'animate-spin' : ''}
-                />
-                <span class="ms-3"
-                  >{updaterStore.isDownloading
-                    ? t('app.download_update', {
-                        version: updaterStore.info?.version
-                      })
-                    : t('app.restart_update')}</span
-                >
+              >
+                {#if updaterStore.isDownloading}
+                  <Spinner class="ms-3 inline-flex" size="4" />
+                  <span class="ms-3">
+                    {t('app.download_update', {
+                      version: updaterStore.info?.version
+                    })}
+                  </span>
+                {:else}
+                  <RefreshOutline
+                    size="lg"
+                    color="green"
+                    class={updaterStore.isDownloading ? 'animate-spin' : ''}
+                  />
+                  <span class="ms-3">{t('app.update_restart')}</span>
+                {/if}
               </button>
             </li>
           {/if}

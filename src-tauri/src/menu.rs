@@ -26,6 +26,23 @@ pub fn setup_app_menu(app: &tauri::AppHandle) -> Result<()> {
         true,
         &[
             &menu_item_about(app)?,
+            &MenuItem::with_id(app, "follow_us", t!("menu.follow_us"), true, None::<&str>)?,
+            &PredefinedMenuItem::separator(app)?,
+            &MenuItem::with_id(app, "settings", t!("menu.settings"), true, None::<&str>)?,
+            &MenuItem::with_id(
+                app,
+                "check_update",
+                t!("menu.check_update"),
+                true,
+                None::<&str>,
+            )?,
+            &MenuItem::with_id(
+                app,
+                "version",
+                t!("menu.version", version = app.package_info().version),
+                false,
+                None::<&str>,
+            )?,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::services(app, Some(&t!("menu.services")))?,
             &PredefinedMenuItem::separator(app)?,
@@ -63,10 +80,23 @@ pub fn setup_app_menu(app: &tauri::AppHandle) -> Result<()> {
         ],
     )?;
     let menu = Menu::with_items(app, &[&app_menu, &edit_menu, &window_menu])?;
-    app.on_menu_event(move |app, event| {
-        if event.id.as_ref() == "quit" {
+    app.on_menu_event(move |app, event| match event.id.as_ref() {
+        "quit" => {
             quit(app);
         }
+        "settings" => {
+            reopen_window(app, "settings", None, false).unwrap();
+        }
+        "check_update" => {
+            reopen_window(app, "update", None, false).unwrap();
+        }
+        "follow_us" => {
+            let _ = app
+                .opener()
+                .open_url("https://x.com/ICPandaDAO", None::<&str>);
+        }
+
+        _ => {}
     });
     app.set_menu(menu)?;
     Ok(())
@@ -83,9 +113,17 @@ pub fn setup_app_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
                 true,
                 Some("CmdOrCtrl+P"),
             )?,
+            &menu_item_about(app)?,
             &MenuItem::with_id(app, "follow_us", t!("menu.follow_us"), true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
-            &menu_item_about(app)?,
+            &MenuItem::with_id(app, "settings", t!("menu.settings"), true, None::<&str>)?,
+            &MenuItem::with_id(
+                app,
+                "check_update",
+                t!("menu.check_update"),
+                true,
+                None::<&str>,
+            )?,
             &MenuItem::with_id(
                 app,
                 "version",
@@ -93,14 +131,6 @@ pub fn setup_app_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
                 false,
                 None::<&str>,
             )?,
-            // &MenuItem::with_id(
-            //     app,
-            //     "check_update",
-            //     t!("menu.check_update"),
-            //     false,
-            //     None::<&str>,
-            // )?,
-            &MenuItem::with_id(app, "settings", t!("menu.settings"), true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(app, "quit", t!("menu.quit"), true, None::<&str>)?,
         ],
@@ -120,6 +150,9 @@ pub fn setup_app_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
             }
             "settings" => {
                 reopen_window(app, "settings", None, false).unwrap();
+            }
+            "check_update" => {
+                reopen_window(app, "update", None, false).unwrap();
             }
             "follow_us" => {
                 let _ = app
@@ -207,10 +240,11 @@ pub fn reopen_window<R: Runtime>(
 
     if toggle
         && let Ok(visible) = window.is_visible()
-            && visible {
-                let _ = window.hide();
-                return Ok(());
-            }
+        && visible
+    {
+        let _ = window.hide();
+        return Ok(());
+    }
 
     // 若为最小化状态，先尝试还原
     let _ = window.unminimize();

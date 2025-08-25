@@ -64,7 +64,7 @@
 >
   {#if assistantStore.isLoadingPrev}
     <div class="mt-4 flex items-center gap-2">
-      <Spinner size="4" />
+      <Spinner size="5" />
     </div>
   {/if}
   <div class="my-10 flex w-full max-w-4xl flex-1 flex-col px-4">

@@ -41,6 +41,21 @@
         "create": false,
         "devtools": true,
         "url": "/settings"
+      },
+      {
+        "label": "update",
+        "title": "Anda AI - Update",
+        "width": 480,
+        "height": 320,
+        "decorations": true,
+        "hiddenTitle": false,
+        "visibleOnAllWorkspaces": false,
+        "alwaysOnTop": false,
+        "titleBarStyle": "Transparent",
+        "minimizable": false,
+        "create": false,
+        "devtools": true,
+        "url": "/update"
       }
     ],
     "security": {

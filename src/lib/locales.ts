@@ -156,13 +156,45 @@ export const translations: Record<string, Record<string, string>> = {
   },
 
   // App
-  'app.restart_update': {
+  'app.check_update': {
+    en: 'Check Update',
+    zh: '检查更新'
+  },
+  'app.current_version': {
+    en: 'Current Version:',
+    zh: '当前版本：'
+  },
+  'app.new_version': {
+    en: 'New Version:',
+    zh: '新版本：'
+  },
+  'app.update_ready': {
+    en: 'The update package is ready',
+    zh: '更新包已准备就绪'
+  },
+  'app.update_restart': {
     en: 'Restart to update',
-    zh: '重启并更新'
+    zh: '重启以更新'
+  },
+  'app.release_notes': {
+    en: 'Release Notes',
+    zh: '更新说明'
   },
   'app.download_update': {
     en: 'Downloading %{version}',
     zh: '下载 %{version}'
+  },
+  'app.checking_update': {
+    en: 'Checking for update',
+    zh: '正在检查更新'
+  },
+  'app.no_update_available': {
+    en: 'No available updates',
+    zh: '暂无可用更新'
+  },
+  'app.checking_update_tip': {
+    en: 'Tip: Update will be checked automatically every hour',
+    zh: '提示：更新将每小时自动检查一次'
   },
   'app.sign_in': {
     en: 'Sign In',

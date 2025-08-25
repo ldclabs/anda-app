@@ -234,7 +234,7 @@
   >
     {#if isLoadingPrev}
       <div class="flex items-center justify-center p-8">
-        <Spinner size="4" />
+        <Spinner size="5" />
       </div>
     {/if}
     {#if currentView === 'kip'}
@@ -338,7 +338,7 @@
 
     {#if isLoading}
       <div class="flex items-center justify-center p-4">
-        <Spinner size="4" />
+        <Spinner size="5" />
       </div>
     {/if}
   </div>

@@ -1,13 +1,19 @@
 import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri.mock'
 import { invoke } from '@tauri-apps/api/core'
+import { getCurrentWebview } from '@tauri-apps/api/webview'
 import { type as osType } from '@tauri-apps/plugin-os'
 import { toastRun } from './toast.svelte'
 
 const ot = isTauriEnvironment() ? osType() : safeOsType()
 
 export interface UpdateInfo {
+  // 应用当前版本
   current_version: string
+  // 最新版本
   version: string
+  // 最新版本更新说明
+  notes: string
+  // 是否已经下载安装包
   ready: boolean
 }
 
@@ -21,13 +27,17 @@ export async function restart(): Promise<void> {
 
 class UpdaterStore {
   static init() {
-    if (ot == 'macos' || ot == 'windows' || ot == 'linux') {
+    const view = getCurrentWebview()
+    if (
+      view.label == 'main' &&
+      (ot == 'macos' || ot == 'windows' || ot == 'linux')
+    ) {
       updaterStore.checkUpdateInternal()
     }
   }
 
   private _info = $state<UpdateInfo | null>(null)
-  private _isDownloading = $derived<boolean>(!!this._info && !this._info.ready)
+  private _isDownloading = $derived<boolean>(!!this._info && !this._info?.ready)
   private _isRestarting = $state<boolean>(false)
 
   get info() {
@@ -42,8 +52,20 @@ class UpdaterStore {
     return this._isRestarting
   }
 
-  private async checkUpdateInternal() {
+  async check_update() {
     this._info = await toastRun(check_update).finally()
+    if (this._info) {
+      if (this._info.ready) return
+      setTimeout(() => {
+        this.check_update()
+      }, 1000)
+    }
+  }
+
+  private async checkUpdateInternal() {
+    try {
+      this._info = await check_update()
+    } catch (_) {} // ignore error
 
     if (this._info) {
       if (this._info.ready) return

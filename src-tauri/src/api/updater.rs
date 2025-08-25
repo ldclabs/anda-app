@@ -138,6 +138,7 @@ pub async fn check_update(app: AppHandle) -> Result<Option<Json>> {
             "current_version": update.current_version,
             "version": update.version,
             "ready": app_updater.package.read().is_some(),
+            "notes": update.body.clone().unwrap_or_default(),
         })));
     }
 
@@ -157,6 +158,7 @@ pub async fn check_update(app: AppHandle) -> Result<Option<Json>> {
             "current_version": &update.current_version,
             "version": &update.version,
             "ready": false,
+            "notes": update.body.clone().unwrap_or_default(),
         });
         async_runtime::spawn(async move {
             if let Ok(data) = update.download(|_, _| {}, || {}).await {
