@@ -35,7 +35,7 @@ futures = { version = "0.3" }
 log = { version = "0.4", features = ["kv", "kv_serde"] }
 object_store = { version = "0.12" }
 ic-cdk = "0.18"
-ic-agent = "0.42"
+ic-agent = "0.44"
 ic_auth_types = "0.6"
 ic_auth_verifier = { version = "0.6", features = ["full"] }
 ic_cose_types = "0.9"
