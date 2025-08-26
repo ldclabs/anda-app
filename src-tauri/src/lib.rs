@@ -62,6 +62,8 @@ pub fn run() {
         )
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::AppleScript,
             None,
@@ -102,9 +104,6 @@ pub fn run() {
                     );
                 }
             }
-
-
-
 
             let app_state = app.state::<AppStateCell>();
             let aes_secret = app_state.with_mut(|state| {

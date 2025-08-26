@@ -6,6 +6,9 @@
   import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri.mock'
   import { sha3_256 } from '@ldclabs/cose-ts/hash'
   import { bytesToBase64Url } from '@ldclabs/cose-ts/utils'
+  import { open as openDialog } from '@tauri-apps/plugin-dialog'
+  import { readFile } from '@tauri-apps/plugin-fs'
+  import { error } from '@tauri-apps/plugin-log'
   import { type as osType } from '@tauri-apps/plugin-os'
   import { Button, Spinner } from 'flowbite-svelte'
   import {
@@ -114,6 +117,43 @@
     })
   }
 
+  async function addFileFromPath(path: string) {
+    const bytes = new Uint8Array(await readFile(path))
+    if (bytes.length > 2 * 1024 * 1024) {
+      triggerToast({
+        type: 'error',
+        message: t('assistant.file_size_too_large')
+      })
+      return
+    }
+    const name = path.split(/[/\\]/).pop() || 'file'
+    const mimeType = mime.getType(name) || ''
+    const tags: string[] = []
+    if (mimeType) {
+      const tag = mime.getExtension(mimeType)
+      if (tag) tags.push(tag)
+      const mi = new MIMEType(mimeType)
+      if (mi) tags.push(mi.type)
+    }
+    const hash = bytesToBase64Url(sha3_256(bytes))
+    const blob = bytesToBase64Url(bytes)
+
+    for (const f of files) {
+      if (f.hash === hash) return
+    }
+
+    files.push({
+      _id: 0,
+      hash,
+      blob,
+      tags,
+      mime_type: mimeType,
+      name,
+      size: bytes.length,
+      metadata: {}
+    })
+  }
+
   function removeFile(hash: string) {
     files = files.filter((f) => f.hash !== hash)
   }
@@ -141,8 +181,33 @@
     }
   }
 
-  function openFilePicker() {
-    fileInputRef?.click()
+  async function openFilePicker() {
+    if (isTauriEnvironment()) {
+      pickFilesTauri()
+    } else {
+      fileInputRef?.click()
+    }
+  }
+
+  async function pickFilesTauri() {
+    try {
+      const selected = await openDialog({
+        multiple: true,
+        directory: false,
+        // 与 accept 限制保持一致
+        filters: [
+          { name: 'Documents', extensions: ['txt', 'md', 'json', 'pdf'] }
+        ]
+      })
+      if (!selected) return
+      const paths = Array.isArray(selected) ? selected : [selected]
+      for (const p of paths) {
+        await addFileFromPath(p as string)
+      }
+    } catch (err) {
+      error(`pickFilesTauri failed: ${err}`)
+      triggerToast({ type: 'error', message: t('assistant.error') })
+    }
   }
 
   function handleFileChange(event: Event) {

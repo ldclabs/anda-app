@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>ai.anda.appdev</string>
+	<key>CFBundleExecutable</key>
+    <string>anda_ai</string>
+	<key>NSPrefPaneIconLabel</key>
+	<string>Anda AI (DEV)</string>
+
+	<key>LSUIElement</key>
+    <false/>
+
+  <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key>
+      <string>ai.anda.app</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>anda</string>
+      </array>
+    </dict>
+  </array>
+
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Anda AI needs access to your microphone for voice input and audio recording features.</string>
+  <key>NSCameraUsageDescription</key>
+  <string>Anda AI requires camera access for scanning documents and capturing images.</string>
+  <key>NSSpeechRecognitionUsageDescription</key>
+  <string>Anda AI uses speech recognition to convert your voice into text for a hands-free experience.</string>
+  <key>NSAppleEventsUsageDescription</key>
+  <string>Anda AI uses Apple Events to update its self automatically.</string>
+</dict>
+</plist>

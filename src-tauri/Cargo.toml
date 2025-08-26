@@ -1,6 +1,6 @@
 [package]
 name = "anda_ai"
-version = "0.3.1"
+version = "0.3.2"
 description = "Anda AI Assistant"
 authors = ["LDC Labs"]
 edition = "2024"
@@ -54,6 +54,8 @@ tauri-plugin-opener = "2"
 tauri-plugin-deep-link = "2"
 tauri-plugin-log = "2"
 tauri-plugin-os = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_bytes = "0.11"

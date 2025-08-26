@@ -1,6 +1,6 @@
 {
   "name": "anda_ai",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "",
   "type": "module",
   "scripts": {
@@ -14,15 +14,18 @@
     "start": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "tauri:dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "tauri:build": "tauri build",
-    "tauri:build-dmg": "tauri build --bundles dmg"
+    "tauri:build-dev": "tauri build --config src-tauri/tauri.dev.conf.json"
   },
   "license": "MIT",
   "dependencies": {
     "@ldclabs/cose-ts": "^1.4.2",
     "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2",
+    "@tauri-apps/plugin-fs": "^2",
+    "@tauri-apps/plugin-log": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-os": "^2",
-    "@tauri-apps/plugin-updater": "~2.9.0",
+    "@tauri-apps/plugin-updater": "^2",
     "cborg": "^4.2.13",
     "debounce": "^2.2.0",
     "emoji-toolkit": "^9.0.1",

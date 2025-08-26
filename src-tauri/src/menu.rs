@@ -251,14 +251,14 @@ pub fn reopen_window<R: Runtime>(
     let _ = window.show();
     let _ = window.set_focus();
 
+    // #[cfg(debug_assertions)]
+    // window.open_devtools();
+
     async_runtime::spawn(async move {
         // 等待窗口显示后再设置焦点
         tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
         let _ = window.set_focus();
     });
-
-    // #[cfg(debug_assertions)]
-    // window.open_devtools();
 
     Ok(())
 }

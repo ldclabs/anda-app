@@ -5,8 +5,7 @@
 // Check if we're running in a Tauri environment
 export function isTauriEnvironment(): boolean {
   return (
-    typeof window !== 'undefined' &&
-    (window as any).__TAURI_METADATA__ !== undefined
+    typeof window !== 'undefined' && (window as any).__TAURI__ !== undefined
   )
 }
 
