@@ -43,6 +43,8 @@ use super::icp::{ICP_HOST, ICPClientExt};
 
 pub const ASSISTANT_EVENT: &str = "AssistantReady";
 
+pub static SYSTEM_INSTRUCTIONS: &str = include_str!("../../kip/SystemInstructions.md");
+
 pub struct AndaAssistant<R: Runtime> {
     #[allow(dead_code)]
     app: AppHandle<R>,
@@ -253,6 +255,7 @@ impl InnerAssistant {
         let object_store = db.object_store().clone();
         let assistant = Assistant::connect(db.clone(), None)
             .await?
+            .with_system_instructions(SYSTEM_INSTRUCTIONS)
             .with_max_input_tokens(cfg.get_max_input_tokens());
         let memory_tool = MemoryTool::new(assistant.memory());
 
