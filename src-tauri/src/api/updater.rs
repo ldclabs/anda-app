@@ -98,11 +98,35 @@ rm -rf \"$tmpdir\"
                             bid = bundle_id,
                             pname = proc_name
                         );
+                        log::info!("Update script: {}", script);
 
                         // 以管理员权限执行脚本（异步），随后本进程退出
                         if let Err(e) = Command::new("osascript").arg("-e").arg(script).spawn() {
                             log::error!("Failed to spawn osascript for update: {}", e);
                         }
+
+                        // 方案二：
+                        // 将 AppleScript 写入临时文件并通过 nohup 后台执行，避免父进程退出带来的竞态
+                        // let script_path: PathBuf =
+                        //     env::temp_dir().join(format!("{}.update.applescript", bundle_id));
+                        // if let Err(e) = fs::write(&script_path, &script) {
+                        //     log::error!("Failed to write update script: {}", e);
+                        // } else {
+                        //     let run = format!(
+                        //         "nohup /usr/bin/osascript '{}' >/dev/null 2>&1 &",
+                        //         script_path.display()
+                        //     );
+                        //     if let Err(e) = Command::new("/bin/sh")
+                        //         .arg("-c")
+                        //         .arg(&run)
+                        //         .stdin(Stdio::null())
+                        //         .stdout(Stdio::null())
+                        //         .stderr(Stdio::null())
+                        //         .spawn()
+                        //     {
+                        //         log::error!("Failed to spawn osascript for update: {}", e);
+                        //     }
+                        // }
                     }
                 }
 
@@ -117,6 +141,7 @@ rm -rf \"$tmpdir\"
     // macOS: 由脚本完成重启，这里直接退出
     #[cfg(target_os = "macos")]
     {
+        tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
         app.exit(0);
     }
 
