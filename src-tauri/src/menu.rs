@@ -18,6 +18,10 @@ static ICON_BYTES: &[u8] = include_bytes!("../icons/icon.png");
 pub fn setup_app_menu(app: &tauri::AppHandle) -> Result<()> {
     // 应用名 / 版本取自 tauri.conf.json
     let app_name = app.package_info().name.clone();
+    let mut version = app.package_info().version.to_string();
+    if tauri::is_dev() {
+        version.push_str(" (dev)");
+    }
 
     // 第一个 Submenu 会成为 macOS 左上角的“应用菜单”，标题会自动显示为应用名
     let app_menu = Submenu::with_items(
@@ -39,7 +43,7 @@ pub fn setup_app_menu(app: &tauri::AppHandle) -> Result<()> {
             &MenuItem::with_id(
                 app,
                 "version",
-                t!("menu.version", version = app.package_info().version),
+                t!("menu.version", version = version),
                 false,
                 None::<&str>,
             )?,
@@ -103,6 +107,10 @@ pub fn setup_app_menu(app: &tauri::AppHandle) -> Result<()> {
 }
 
 pub fn setup_app_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
+    let mut version = app.package_info().version.to_string();
+    if tauri::is_dev() {
+        version.push_str(" (dev)");
+    }
     let menu = Menu::with_items(
         app,
         &[
@@ -127,7 +135,7 @@ pub fn setup_app_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
             &MenuItem::with_id(
                 app,
                 "version",
-                t!("menu.version", version = app.package_info().version),
+                t!("menu.version", version = version),
                 false,
                 None::<&str>,
             )?,

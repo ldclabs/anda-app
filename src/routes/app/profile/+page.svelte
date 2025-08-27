@@ -67,7 +67,7 @@
               ></p
             >
           {/if}
-          <div class="md-content mx-auto mb-4 text-center"
+          <div class="md-content mx-auto mb-4 text-center dark:text-white"
             >{@html profileUpdateInfo}</div
           >
           <div
@@ -100,7 +100,7 @@
       </div>
     {:else}
       <AndaPlaceholder><span></span></AndaPlaceholder>
-      <div class="md-content mx-auto text-center text-lg"
+      <div class="md-content mx-auto text-center text-lg dark:text-white"
         >{@html profilePlaceholder}</div
       >
     {/if}
