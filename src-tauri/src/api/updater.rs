@@ -49,107 +49,17 @@ pub async fn restart(app: AppHandle) {
 
         if let Some(package) = package {
             // await 之后再获取一个新的克隆用于安装
-            // Issue: "Failed to move the new app into place" on MacOS
+            // MacOS issue: "Failed to move the new app into place"
             // https://github.com/tauri-apps/plugins-workspace/issues/2455
-            if let Some(_update_for_install) = app_updater.info.read().as_ref().cloned() {
-                #[cfg(target_os = "macos")]
-                {
-                    use std::{env, fs, path::PathBuf, process::Command};
-
-                    // 将下载的更新包写入临时文件（不在 /Applications 上写，避免权限问题）
-                    let bundle_id = app.config().identifier.clone();
-                    let pkg_path: PathBuf =
-                        env::temp_dir().join(format!("{}.update.tar.gz", bundle_id));
-                    if let Err(e) = fs::write(&pkg_path, &package) {
-                        log::error!("Failed to write update package: {}", e);
-                    } else {
-                        // 推导当前 .app bundle 路径和可执行名
-                        let exe = env::current_exe().unwrap_or_default();
-                        let proc_name = exe
-                            .file_name()
-                            .and_then(|s| s.to_str())
-                            .unwrap_or("anda_ai")
-                            .to_string();
-                        // 从 .../Your.app/Contents/MacOS/your_exec 回退到 Your.app
-                        let app_bundle = exe
-                            .parent()
-                            .and_then(|p| p.parent())
-                            .and_then(|p| p.parent())
-                            .map(|p| p.to_path_buf())
-                            .unwrap_or_else(|| PathBuf::from("/Applications/Anda AI.app"));
-
-                        // AppleScript：等待当前进程退出 -> 解压 -> ditto 覆盖 -> 重启 -> 清理
-                        let script = format!(
-                            r#"
-do shell script "
-tmpdir=$(mktemp -d) || exit 1
-cd \"$tmpdir\" || exit 1
-/usr/bin/tar -xzf \"{pkg}\" || exit 1
-name=$(ls -1 | head -n1)
-while pgrep -x \"{pname}\" >/dev/null; do sleep 0.2; done
-rm -rf \"{app}\"
-/usr/bin/ditto \"$name\" \"{app}\" || /bin/mv -f \"$name\" \"{app}\"
-/usr/bin/open -n -b \"{bid}\"
-rm -rf \"$tmpdir\"
-" with administrator privileges
-"#,
-                            pkg = pkg_path.display(),
-                            app = app_bundle.display(),
-                            bid = bundle_id,
-                            pname = proc_name
-                        );
-                        log::info!("Update script: {}", script);
-
-                        // 以管理员权限执行脚本（异步），随后本进程退出
-                        if let Err(e) = Command::new("osascript").arg("-e").arg(script).spawn() {
-                            log::error!("Failed to spawn osascript for update: {}", e);
-                        }
-
-                        // 方案二：
-                        // 将 AppleScript 写入临时文件并通过 nohup 后台执行，避免父进程退出带来的竞态
-                        // let script_path: PathBuf =
-                        //     env::temp_dir().join(format!("{}.update.applescript", bundle_id));
-                        // if let Err(e) = fs::write(&script_path, &script) {
-                        //     log::error!("Failed to write update script: {}", e);
-                        // } else {
-                        //     let run = format!(
-                        //         "nohup /usr/bin/osascript '{}' >/dev/null 2>&1 &",
-                        //         script_path.display()
-                        //     );
-                        //     if let Err(e) = Command::new("/bin/sh")
-                        //         .arg("-c")
-                        //         .arg(&run)
-                        //         .stdin(Stdio::null())
-                        //         .stdout(Stdio::null())
-                        //         .stderr(Stdio::null())
-                        //         .spawn()
-                        //     {
-                        //         log::error!("Failed to spawn osascript for update: {}", e);
-                        //     }
-                        // }
-                    }
-                }
-
-                #[cfg(not(target_os = "macos"))]
-                if let Err(e) = _update_for_install.install(&package) {
-                    log::error!("Failed to install update: {}", e);
+            if let Some(updater) = app_updater.info.read().as_ref().cloned() {
+                if let Err(err) = updater.install(&package) {
+                    log::error!("Failed to install update: {}", err);
                 }
             }
         }
     };
 
-    // macOS: 由脚本完成重启，这里直接退出
-    #[cfg(target_os = "macos")]
-    {
-        tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
-        app.exit(0);
-    }
-
-    // 其它平台：仍用内置的重启
-    #[cfg(not(target_os = "macos"))]
-    {
-        app.restart()
-    }
+    app.restart()
 }
 
 #[tauri::command]
