@@ -64,42 +64,79 @@ export interface Conversation {
   updated_at: number
 }
 
+function messageContent(content: Json | undefined): string {
+  if (!content) return ''
+  if (typeof content === 'string') return content
+
+  if (Array.isArray(content)) {
+    const texts = []
+    for (const item of content) {
+      if (typeof item === 'string') texts.push(item)
+      else if ((item as any).text && !(item as any).thought)
+        texts.push((item as any).text)
+    }
+    return texts.join('\n')
+  }
+
+  return (content as any).text || ''
+}
+
 export function toChatMessages(conversation: Conversation): ChatMessage[] {
   const res: ChatMessage[] = []
   for (let i = 0; i < conversation.messages.length; i++) {
     const message = conversation.messages[i]
     if (
       message.content &&
-      message.name != '$system' &&
+      !message.name?.startsWith('$') &&
       (message.role == 'user' || message.role == 'assistant')
     ) {
-      res.push({
-        conversation: conversation._id,
-        id: `msg-${conversation._id}-${i}`,
-        content:
-          typeof message.content === 'string'
-            ? message.content
-            : JSON.stringify(message.content), // TODO
-        role: message.role,
-        timestamp: message.timestamp || conversation.updated_at
-      })
+      const content = messageContent(message.content)
+      if (content) {
+        res.push({
+          conversation: conversation._id,
+          id: `msg-${conversation._id}-${i}`,
+          content,
+          role: message.role,
+          timestamp: message.timestamp || conversation.updated_at
+        })
+      }
     }
   }
   return res
 }
 
+function thoughtContent(content: Json | undefined): string {
+  if (!content) return ''
+  if (typeof content === 'string') return content
+
+  if (Array.isArray(content)) {
+    const texts = []
+    for (const item of content) {
+      if (typeof item === 'string') texts.push(item)
+      else if ((item as any).text) texts.push((item as any).text)
+    }
+    if (texts.length > 0) return texts.join('\n')
+  }
+
+  return (content as any).text || JSON.stringify(content)
+}
+
 export function lastThought(conversation: Conversation): ChatMessage | null {
   const message = conversation.messages.at(-1)
-  if (message && (message.name == '$system' || message.tool_calls)) {
-    return {
-      conversation: conversation._id,
-      id: `msg-${conversation._id}-${conversation.messages.length - 1}`,
-      content:
-        typeof message.content === 'string'
-          ? message.content
-          : JSON.stringify(message.content || message.tool_calls), // TODO
-      role: message.role,
-      timestamp: message.timestamp || conversation.updated_at
+  if (message && (message.name?.startsWith('$') || message.tool_calls)) {
+    let content = thoughtContent(message.content)
+    if (!content && message.tool_calls) {
+      content = JSON.stringify(message.tool_calls)
+    }
+
+    if (content) {
+      return {
+        conversation: conversation._id,
+        id: `msg-${conversation._id}-${conversation.messages.length - 1}`,
+        content,
+        role: message.role,
+        timestamp: message.timestamp || conversation.updated_at
+      }
     }
   }
   return null

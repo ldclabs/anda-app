@@ -115,7 +115,7 @@
   const api_base_placeholder = $derived.by(() => {
     switch (currentProvider) {
       case 'gemini':
-        return 'https://generativelanguage.googleapis.com/v1beta/openai'
+        return 'https://generativelanguage.googleapis.com/v1beta/models'
       case 'openai':
         return 'https://api.openai.com/v1'
       case 'deepseek':
