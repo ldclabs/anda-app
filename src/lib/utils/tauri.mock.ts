@@ -1,6 +1,7 @@
 /**
  * Tauri Mock utilities for browser development
  */
+import { type } from '@tauri-apps/plugin-os'
 
 // Check if we're running in a Tauri environment
 export function isTauriEnvironment(): boolean {
@@ -38,16 +39,13 @@ export function safeOsType(): string {
 }
 
 // Async version for dynamic imports in Tauri environment
-export async function safeOsTypeAsync(): Promise<string> {
+export function osType(): string {
   if (isTauriEnvironment()) {
     try {
-      const { type } = await import('@tauri-apps/plugin-os')
       return type()
     } catch (error) {
       console.warn('Failed to get OS type from Tauri:', error)
-      return safeOsType()
     }
   }
-
   return safeOsType()
 }

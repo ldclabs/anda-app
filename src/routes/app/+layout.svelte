@@ -4,9 +4,8 @@
   import { authStore, signIn, signInByUrl } from '$lib/stores/auth.svelte'
   import { t } from '$lib/stores/i18n'
   import { toastRun } from '$lib/stores/toast.svelte'
-  import { updaterStore } from '$lib/stores/updater.svelte'
-  import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri.mock'
-  import { type as osType } from '@tauri-apps/plugin-os'
+  import { open_update_window, updaterStore } from '$lib/stores/updater.svelte'
+  import { osType } from '$lib/utils/tauri.mock'
   import {
     Avatar,
     BottomNav,
@@ -21,6 +20,7 @@
     Spinner
   } from 'flowbite-svelte'
   import {
+    BellRingOutline,
     QuestionCircleOutline,
     RefreshOutline,
     UserCircleOutline,
@@ -29,7 +29,7 @@
   import { setContext } from 'svelte'
 
   // Safe OS type detection
-  const ot = isTauriEnvironment() ? osType() : safeOsType()
+  const ot = osType()
 
   let { children } = $props()
 
@@ -207,7 +207,24 @@
               </button>
             </li>
           {/if}
-          {#if updaterStore.info}
+          {#if updaterStore.info && ot == 'macos'}
+            <li>
+              <button
+                class="flex w-full items-center rounded-sm p-2 text-base font-normal hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                onclick={() => open_update_window()}
+              >
+                <BellRingOutline
+                  class="text-primary-500 inline-flex"
+                  size="md"
+                />
+                <span class="ms-3">
+                  {t('app.new_version', {
+                    version: updaterStore.info?.version || 'v1.0.0'
+                  })}
+                </span>
+              </button>
+            </li>
+          {:else if updaterStore.info}
             <li>
               <button
                 class="flex w-full items-center rounded-sm p-2 text-base font-normal hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700 {updaterStore.isDownloading
@@ -227,8 +244,9 @@
                 {:else}
                   <RefreshOutline
                     size="lg"
-                    color="green"
-                    class={updaterStore.isDownloading ? 'animate-spin' : ''}
+                    class="text-primary-500 {updaterStore.isDownloading
+                      ? 'animate-spin'
+                      : ''}"
                   />
                   <span class="ms-3">{t('app.update_restart')}</span>
                 {/if}

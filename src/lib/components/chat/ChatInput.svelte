@@ -3,13 +3,12 @@
   import { triggerToast } from '$lib/stores/toast.svelte'
   import { type Resource } from '$lib/types/assistant'
   import { fileToBase64Url, formatSize } from '$lib/utils/helper'
-  import { isTauriEnvironment, safeOsType } from '$lib/utils/tauri.mock'
+  import { isTauriEnvironment, osType } from '$lib/utils/tauri.mock'
   import { sha3_256 } from '@ldclabs/cose-ts/hash'
   import { bytesToBase64Url } from '@ldclabs/cose-ts/utils'
   import { open as openDialog } from '@tauri-apps/plugin-dialog'
   import { readFile } from '@tauri-apps/plugin-fs'
   import { error } from '@tauri-apps/plugin-log'
-  import { type as osType } from '@tauri-apps/plugin-os'
   import { Button, Spinner } from 'flowbite-svelte'
   import {
     CirclePlusOutline,
@@ -25,7 +24,7 @@
   import { onDestroy } from 'svelte'
   import MIMEType from 'whatwg-mimetype'
 
-  const ot = isTauriEnvironment() ? osType() : safeOsType()
+  const ot = osType()
   const shortcutLabel = ot === 'macos' ? '⌘ ⏎' : 'Ctrl ⏎'
   const isSubmitEvent =
     ot === 'macos'
@@ -331,7 +330,7 @@
       onclick={openFilePicker}
       {disabled}
       color="alternative"
-      class="shadow-0 rounded-full p-1 disabled:text-gray-500/50"
+      class="shadow-0 rounded-full border-2 p-1 disabled:text-gray-500/50"
     >
       <CirclePlusOutline size="lg" />
     </Button>

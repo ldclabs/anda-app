@@ -1,6 +1,6 @@
 [package]
 name = "anda_ai"
-version = "0.3.4"
+version = "0.3.5"
 description = "Anda AI Assistant"
 authors = ["LDC Labs"]
 edition = "2024"
@@ -26,7 +26,7 @@ anda_core = "0.7"
 anda_engine = "0.7"
 anda_web3_client = "0.7"
 anda_assistant = "0.2"
-anda_object_store = "0.1"
+anda_object_store = "0.2"
 anda_db = "0.5"
 ciborium = "0.2"
 candid = "0.10"

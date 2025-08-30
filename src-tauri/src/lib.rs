@@ -92,6 +92,7 @@ pub fn run() {
             api::updater::quit,
             api::updater::restart,
             api::updater::check_update,
+            api::updater::update_supported,
         ])
         .setup(|app| {
             if tauri::is_dev() {

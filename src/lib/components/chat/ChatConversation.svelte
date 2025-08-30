@@ -7,6 +7,7 @@
     toChatMessages,
     type Conversation
   } from '$lib/types/assistant'
+  import { Hr } from 'flowbite-svelte'
   import { UserHeadsetOutline } from 'flowbite-svelte-icons'
   import ChatMessage from './ChatMessage.svelte'
 
@@ -18,7 +19,7 @@
 
 <div
   id={`conversation-${props.conversation._id}`}
-  class="flex flex-col rounded-lg"
+  class="mt-2 flex flex-col rounded-lg"
 >
   {#each messages as message (message.id)}
     {#if message.role == 'user' || message.role == 'assistant'}
@@ -47,5 +48,13 @@
         </div>
       </div>
     </div>
+  {:else}
+    <Hr class="mx-4 my-4 h-[1px] w-full bg-gray-500/10"
+      ><span class="text-xs text-gray-500"
+        >{Math.floor(
+          (props.conversation.updated_at - props.conversation.created_at) / 1000
+        )}s</span
+      ></Hr
+    >
   {/if}
 </div>

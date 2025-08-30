@@ -2,6 +2,7 @@
   import { t } from '$lib/stores/i18n'
   import { updaterStore } from '$lib/stores/updater.svelte'
   import { renderMarkdown } from '$lib/utils/markdown'
+  import { osType } from '$lib/utils/tauri.mock'
   import { openUrl } from '@tauri-apps/plugin-opener'
   import { Button, Spinner } from 'flowbite-svelte'
   import {
@@ -10,6 +11,7 @@
   } from 'flowbite-svelte-icons'
   import { onMount, tick } from 'svelte'
 
+  const ot = osType()
   // 原始 ESC 控制序列
   const ansiPattern =
     /[\u001B\u009B][[\]()#;?]*(?:\d{1,4}(?:;\d{0,4})*)?[0-9A-ORZcf-nqry=><~]/g
@@ -35,7 +37,9 @@
   })
 </script>
 
-<div class="mx-auto max-w-2xl p-6">
+<div
+  class="mx-auto min-h-screen max-w-2xl p-6 dark:bg-gray-800 dark:text-gray-200"
+>
   <h1 class="mb-6 text-2xl font-bold">{t('app.check_update')}</h1>
 
   {#if updaterStore.info}
@@ -44,9 +48,9 @@
     >
       <div class="text-gray-600 dark:text-gray-300">
         <div
-          >{t('app.current_version')}<span class="ml-2 font-mono"
-            >{updaterStore.info.current_version}</span
-          ></div
+          >{t('app.current_version', {
+            version: updaterStore.info.current_version
+          })}</div
         >
         <div>
           <a
@@ -59,9 +63,7 @@
               openUrl('https://github.com/ldclabs/anda-app/releases')
             }}
           >
-            {t('app.new_version')}<span class="font-mono"
-              >{updaterStore.info.version}</span
-            >
+            {t('app.new_version', { version: updaterStore.info.version })}
             <span class="ml-2">Github</span><ArrowUpRightFromSquareOutline
               size="md"
             />
@@ -70,7 +72,27 @@
       </div>
     </div>
 
-    {#if updaterStore.isDownloading}
+    {#if ot === 'macos'}
+      <!-- macOS sandbox: 引导用户前往 GitHub 下载并手动安装 -->
+      <div
+        class="flex flex-col items-center gap-4 rounded-lg border border-gray-200 p-4 text-gray-700 dark:border-gray-700 dark:text-gray-200"
+      >
+        <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+          {t('app.update_manual_mac')}
+        </p>
+        <Button
+          color="green"
+          size="md"
+          onclick={() =>
+            openUrl('https://github.com/ldclabs/anda-app/releases')}
+        >
+          <span class="inline-flex items-center">
+            <ArrowUpRightFromSquareOutline class="me-2" size="lg" />
+            {t('app.go_to_download')}
+          </span>
+        </Button>
+      </div>
+    {:else if updaterStore.isDownloading}
       <div
         class="flex items-center gap-3 rounded-lg border border-gray-200 p-4 text-gray-700 dark:border-gray-700 dark:text-gray-200"
       >

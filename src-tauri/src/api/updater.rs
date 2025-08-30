@@ -1,6 +1,6 @@
 use parking_lot::RwLock;
 use serde_json::{Value as Json, json};
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 use tauri::{AppHandle, Manager, Url, async_runtime};
 use tauri_plugin_updater::{Update, UpdaterExt};
 
@@ -22,6 +22,38 @@ impl Default for Updater {
     }
 }
 
+pub fn is_mas_build() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        // 通过 App Store 收据判断：Your.app/Contents/_MASReceipt/receipt
+        if let Ok(exe) = std::env::current_exe() {
+            let app_bundle = exe
+                .parent()
+                .and_then(|p| p.parent())
+                .and_then(|p| p.parent());
+            if let Some(bundle) = app_bundle {
+                let receipt: PathBuf = bundle.join("Contents/_MASReceipt/receipt");
+                if receipt.exists() {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+#[tauri::command]
+pub fn update_supported() -> bool {
+    // 前端可据此隐藏“检查更新”入口
+    #[cfg(desktop)]
+    {
+        !is_mas_build()
+    }
+
+    #[cfg(not(desktop))]
+    false
+}
+
 #[tauri::command]
 pub async fn quit(app: AppHandle) {
     app.assistant().close().await;
@@ -32,7 +64,8 @@ pub async fn quit(app: AppHandle) {
 pub async fn restart(app: AppHandle) {
     app.assistant().close().await;
 
-    if let Some(app_updater) = app.try_state::<Updater>()
+    if !is_mas_build()
+        && let Some(app_updater) = app.try_state::<Updater>()
         && app_updater.info.read().is_some()
     {
         // 先尝试用缓存的字节
@@ -51,10 +84,10 @@ pub async fn restart(app: AppHandle) {
             // await 之后再获取一个新的克隆用于安装
             // MacOS issue: "Failed to move the new app into place"
             // https://github.com/tauri-apps/plugins-workspace/issues/2455
-            if let Some(updater) = app_updater.info.read().as_ref().cloned() {
-                if let Err(err) = updater.install(&package) {
-                    log::error!("Failed to install update: {}", err);
-                }
+            if let Some(updater) = app_updater.info.read().as_ref().cloned()
+                && let Err(err) = updater.install(&package)
+            {
+                log::error!("Failed to install update: {}", err);
             }
         }
     };
@@ -64,6 +97,12 @@ pub async fn restart(app: AppHandle) {
 
 #[tauri::command]
 pub async fn check_update(app: AppHandle) -> Result<Option<Json>> {
+    if is_mas_build() {
+        // MAS 版本直接禁用检查更新
+        log::info!("Mac App Store build: updates managed by App Store");
+        return Ok(None);
+    }
+
     let app_updater = match app.try_state::<Updater>() {
         Some(updater) => updater,
         None => return Ok(None),

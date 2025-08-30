@@ -11,7 +11,7 @@ use tauri::{
 };
 use tauri_plugin_opener::OpenerExt;
 
-use crate::{Result, service::assistant::AndaAssistantExt};
+use crate::{Result, api::updater::is_mas_build, service::assistant::AndaAssistantExt};
 
 static ICON_BYTES: &[u8] = include_bytes!("../icons/icon.png");
 
@@ -35,16 +35,9 @@ pub fn setup_app_menu(app: &tauri::AppHandle) -> Result<()> {
             &MenuItem::with_id(app, "settings", t!("menu.settings"), true, None::<&str>)?,
             &MenuItem::with_id(
                 app,
-                "check_update",
-                t!("menu.check_update"),
-                true,
-                None::<&str>,
-            )?,
-            &MenuItem::with_id(
-                app,
                 "version",
                 t!("menu.version", version = version),
-                false,
+                !is_mas_build(),
                 None::<&str>,
             )?,
             &PredefinedMenuItem::separator(app)?,
@@ -91,7 +84,7 @@ pub fn setup_app_menu(app: &tauri::AppHandle) -> Result<()> {
         "settings" => {
             reopen_window(app, "settings", None, false).unwrap();
         }
-        "check_update" => {
+        "version" => {
             reopen_window(app, "update", None, false).unwrap();
         }
         "follow_us" => {
@@ -127,16 +120,9 @@ pub fn setup_app_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
             &MenuItem::with_id(app, "settings", t!("menu.settings"), true, None::<&str>)?,
             &MenuItem::with_id(
                 app,
-                "check_update",
-                t!("menu.check_update"),
-                true,
-                None::<&str>,
-            )?,
-            &MenuItem::with_id(
-                app,
                 "version",
                 t!("menu.version", version = version),
-                false,
+                !is_mas_build(),
                 None::<&str>,
             )?,
             &PredefinedMenuItem::separator(app)?,
@@ -159,7 +145,7 @@ pub fn setup_app_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<()> {
             "settings" => {
                 reopen_window(app, "settings", None, false).unwrap();
             }
-            "check_update" => {
+            "version" => {
                 reopen_window(app, "update", None, false).unwrap();
             }
             "follow_us" => {

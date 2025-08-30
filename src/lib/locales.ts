@@ -161,12 +161,12 @@ export const translations: Record<string, Record<string, string>> = {
     zh: '检查更新'
   },
   'app.current_version': {
-    en: 'Current Version:',
-    zh: '当前版本：'
+    en: 'Current Version: %{version}',
+    zh: '当前版本：%{version}'
   },
   'app.new_version': {
-    en: 'New Version:',
-    zh: '新版本：'
+    en: 'New Version: %{version}',
+    zh: '新版本：%{version}'
   },
   'app.update_ready': {
     en: 'The update package is ready',
@@ -191,6 +191,14 @@ export const translations: Record<string, Record<string, string>> = {
   'app.no_update_available': {
     en: 'No available updates',
     zh: '暂无可用更新'
+  },
+  'app.update_manual_mac': {
+    en: 'A new version is available. Due to macOS App Sandbox restrictions, automatic installation is not supported. Please download and install manually from GitHub Releases.',
+    zh: '检测到新版本。由于 macOS App Sandbox 限制，无法自动安装，请前往 GitHub Releases 下载并手动安装。'
+  },
+  'app.go_to_download': {
+    en: 'Go to Download',
+    zh: '前往下载'
   },
   'app.checking_update_tip': {
     en: 'Tip: Update will be checked automatically every hour',

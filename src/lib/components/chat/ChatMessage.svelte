@@ -29,7 +29,7 @@
 
 <div
   id={`${message.id}`}
-  class="group hover:border-secondary-500/50 relative flex max-w-4xl gap-3 rounded-lg border border-transparent p-4 {message.role ===
+  class="group hover:border-secondary-500/20 relative flex max-w-4xl gap-3 rounded-lg border border-transparent p-4 {message.role ===
   'user'
     ? 'flex-row-reverse'
     : 'flex-row'}"
@@ -40,7 +40,7 @@
       : 'w-full'}"
   >
     <div
-      class="pointer-events-none sticky top-0 z-10 -mt-12 -mr-2 flex flex-row gap-2 rounded-lg bg-white/80 p-2 opacity-0 backdrop-blur-xs transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 dark:bg-gray-800 {message.role ===
+      class="pointer-events-none sticky top-0 z-10 -mt-10 -mr-2 flex flex-row gap-2 rounded-lg bg-white/80 p-2 opacity-0 backdrop-blur-xs transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 dark:bg-gray-800 {message.role ===
       'user'
         ? ''
         : 'self-end'}"
@@ -59,7 +59,7 @@
         onclick={() => (text = getPlainText(message.content))}
         size="sm"
         color="alternative"
-        class="focus-within:ring-0 focus:ring-0"
+        class="px-2 py-1 focus-within:ring-0 focus:ring-0"
       >
         {#if textSuccess}<CheckOutline />{:else}<FileCopyAltOutline />{/if}{t(
           'app.copy_text'
@@ -70,7 +70,7 @@
         bind:success={mdSuccess}
         size="sm"
         color="alternative"
-        class="focus-within:ring-0 focus:ring-0"
+        class="px-2 py-1 focus-within:ring-0 focus:ring-0"
       >
         {#if mdSuccess}<CheckOutline />{:else}<FileCloneOutline />{/if}{t(
           'app.copy_origin'
