@@ -104,12 +104,10 @@ function messageContent(content: ContentPart[] | undefined): string {
       if (typeof item === 'string') {
         texts.push(item)
       } else {
-        if ((item as any).text && !item.type) {
-          ;(item as any).type = 'Text'
-        }
+        const type = item.type || 'Text'
 
-        if (item.type === 'Text') {
-          texts.push(item.text)
+        if (type === 'Text' && (item as any).text) {
+          texts.push((item as any).text)
         }
       }
     }
