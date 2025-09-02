@@ -101,8 +101,17 @@ function messageContent(content: ContentPart[] | undefined): string {
   if (Array.isArray(content)) {
     const texts = []
     for (const item of content) {
-      if (typeof item === 'string') texts.push(item)
-      else if (item.type == 'Text') texts.push(item.text)
+      if (typeof item === 'string') {
+        texts.push(item)
+      } else {
+        if ((item as any).text && !item.type) {
+          ;(item as any).type = 'Text'
+        }
+
+        if (item.type === 'Text') {
+          texts.push(item.text)
+        }
+      }
     }
     return texts.join('\n')
   }
