@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type DiagnosisModal from '$lib/components/diagnosis/DiagnosisModal.svelte'
   import FadeStaggerSquares from '$lib/components/icons/FadeStaggerSquares.svelte'
   import { assistantStore } from '$lib/stores/assistant.svelte'
   import { t } from '$lib/stores/i18n'
@@ -8,13 +9,15 @@
     type Conversation
   } from '$lib/types/assistant'
   import { Hr } from 'flowbite-svelte'
-  import { UserHeadsetOutline } from 'flowbite-svelte-icons'
+  import { InfoCircleOutline, UserHeadsetOutline } from 'flowbite-svelte-icons'
+  import { getContext } from 'svelte'
   import ChatMessage from './ChatMessage.svelte'
 
   // const { conversation }: { conversation: Conversation } = $props() ❌
   // $props() 返回的是“活”的 props 容器，但你对它做了解构成独立变量，这会“截断”后续的变更
   const props = $props<{ conversation: Conversation }>()
   const messages = $derived(toChatMessages(props.conversation))
+  const diagnosisModal = getContext<() => DiagnosisModal>('diagnosisModalState')
 </script>
 
 <div
@@ -49,12 +52,21 @@
       </div>
     </div>
   {:else}
-    <Hr class="mx-4 my-4 h-[1px] w-full bg-gray-500/10"
-      ><span class="text-xs text-gray-500"
-        >{Math.floor(
-          (props.conversation.updated_at - props.conversation.created_at) / 1000
-        )}s</span
-      ></Hr
-    >
+    <Hr class="mx-4 my-4 h-[1px] w-full bg-gray-500/10">
+      <div class="flex flex-row items-center gap-1">
+        <button
+          class="flex items-center rounded-sm p-1 text-base font-normal text-gray-500 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+          onclick={() =>
+            diagnosisModal().openView('conversation', props.conversation._id)}
+          ><InfoCircleOutline size="md" />
+        </button>
+        <span class="text-xs text-gray-500"
+          >{Math.floor(
+            (props.conversation.updated_at - props.conversation.created_at) /
+              1000
+          )}s</span
+        >
+      </div>
+    </Hr>
   {/if}
 </div>

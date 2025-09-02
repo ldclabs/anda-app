@@ -145,7 +145,7 @@ class AssistantStore {
     const res: ToolOutput<Response<Conversation>> = await tool_call({
       name: 'memory_api',
       args: {
-        _type: 'GetConversation',
+        type: 'GetConversation',
         _id
       } as MemoryToolArgs
     })
@@ -177,7 +177,7 @@ class AssistantStore {
     const res: ToolOutput<Response<KIPLog[]>> = await tool_call({
       name: 'memory_api',
       args: {
-        _type: 'ListKipLogs',
+        type: 'ListKipLogs',
         cursor,
         limit
       } as MemoryToolArgs
@@ -195,7 +195,7 @@ class AssistantStore {
     const res: ToolOutput<Response<Conversation[]>> = await tool_call({
       name: 'memory_api',
       args: {
-        _type: 'ListPrevConversations',
+        type: 'ListPrevConversations',
         cursor,
         limit
       } as MemoryToolArgs
@@ -221,7 +221,7 @@ class AssistantStore {
           tool_call<MemoryToolArgs, Response<Conversation[]>>({
             name: 'memory_api',
             args: {
-              _type: 'ListPrevConversations',
+              type: 'ListPrevConversations',
               cursor: this._prevConversationCursor,
               limit: 20
             } as MemoryToolArgs
@@ -253,7 +253,7 @@ class AssistantStore {
       const res: ToolOutput<Response<Conversation[]>> = await tool_call({
         name: 'memory_api',
         args: {
-          _type: 'ListPrevConversations',
+          type: 'ListPrevConversations',
           limit: 20
         } as MemoryToolArgs
       })
@@ -323,7 +323,7 @@ class AssistantStore {
       const res: ToolOutput<Response<Conversation>> = await tool_call({
         name: 'memory_api',
         args: {
-          _type: 'StopConversation',
+          type: 'StopConversation',
           _id
         } as MemoryToolArgs
       })

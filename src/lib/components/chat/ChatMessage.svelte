@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type DiagnosisModal from '$lib/components/diagnosis/DiagnosisModal.svelte'
   import { t } from '$lib/stores/i18n'
   import type { ChatMessage } from '$lib/types/assistant'
   import { formatDateTime } from '$lib/utils/helper'
@@ -8,14 +7,12 @@
   import {
     CheckOutline,
     FileCloneOutline,
-    FileCopyAltOutline,
-    InfoCircleOutline
+    FileCopyAltOutline
   } from 'flowbite-svelte-icons'
-  import { getContext, onMount } from 'svelte'
+  import { onMount } from 'svelte'
 
   let { message }: { message: ChatMessage } = $props()
   const [content, hook] = renderMarkdown(message.content)
-  const diagnosisModal = getContext<() => DiagnosisModal>('diagnosisModalState')
 
   let text = $state('')
   let origin = $state(message.content)
@@ -45,14 +42,6 @@
         ? ''
         : 'self-end'}"
     >
-      {#if message.role === 'user'}
-        <button
-          class="flex items-center rounded-sm p-2 text-base font-normal text-gray-500 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-          onclick={() =>
-            diagnosisModal().openView('conversation', message.conversation)}
-          ><InfoCircleOutline size="md" />
-        </button>
-      {/if}
       <Clipboard
         bind:value={text}
         bind:success={textSuccess}

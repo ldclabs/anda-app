@@ -197,8 +197,8 @@ Contains a series of graph pattern matching and filtering clauses, which are imp
 * **Proposition matching**: Is idempotent by either `(id: "<link_id>")` or `(?subject, "<predicate>", ?object)`. `SET PROPOSITIONS` adds links additively; it does not overwrite existing links. Use `DELETE PROPOSITIONS` to remove links.
 * `SET ATTRIBUTES` merges keys additively; to remove attributes or metadata, use `DELETE ATTRIBUTES` / `DELETE METADATA`.
 * WITH METADATA precedence:
-  * Outer capsule-level `WITH METADATA` provides defaults for all inner items.
-  * Inner `WITH METADATA` at concept/proposition/link level overrides the outer defaults for the specific item.
+  * Outer capsule-level `WITH METADATA` at the `UPSERT` block provides defaults for all inner items.
+  * Inner `WITH METADATA` at `CONCEPT` / `PROPOSITION` block level overrides the outer defaults for the specific item.
 * Handle ordering: local handles must be declared before use; subjects/objects in `PROPOSITION` can reference earlier local handles or matched entities.
 
 **Tips for lifecycle**:

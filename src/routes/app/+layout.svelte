@@ -235,19 +235,14 @@
                   updaterStore.isRestarting}
               >
                 {#if updaterStore.isDownloading}
-                  <Spinner class="ms-3 inline-flex" size="4" />
+                  <Spinner class="inline-flex" size="4" />
                   <span class="ms-3">
                     {t('app.download_update', {
                       version: updaterStore.info?.version
                     })}
                   </span>
                 {:else}
-                  <RefreshOutline
-                    size="lg"
-                    class="text-primary-500 {updaterStore.isDownloading
-                      ? 'animate-spin'
-                      : ''}"
-                  />
+                  <RefreshOutline size="lg" class="text-primary-500" />
                   <span class="ms-3">{t('app.update_restart')}</span>
                 {/if}
               </button>

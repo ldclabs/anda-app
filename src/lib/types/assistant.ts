@@ -17,21 +17,51 @@ export interface ChatMessage {
   timestamp: number
 }
 
+export type ContentPart =
+  | {
+      type: 'Text'
+      text: string
+    }
+  | {
+      type: 'Reasoning'
+      text: string
+    }
+  | {
+      type: 'FileData'
+      fileUri: string
+      mimeType?: string
+    }
+  | {
+      type: 'InlineData'
+      mimeType: string
+      data: string
+    }
+  | {
+      type: 'ToolCall'
+      name: string
+      args: Json
+      callId?: string
+    }
+  | {
+      type: 'ToolOutput'
+      name: string
+      output: Json
+      callId?: string
+    }
+  | ({
+      type: 'Any'
+    } & Record<string, Json>)
+
+// 与 Rust 结构体 Message 对齐
 export interface Message {
   role: 'user' | 'assistant' | 'tool'
 
-  /// The content of the message, can be text or JSON array.
-  content: Json
+  content: ContentPart[]
 
-  /// An optional name for the participant. Provides the model information to differentiate between participants of the same role.
   name?: string
-
-  /// Tool call that this message is responding to. If this message is a response to a tool call, this field should be set to the tool call ID.
-  tool_call_id?: string
-
-  tool_calls?: Json[]
-
-  timestamp?: number
+  user?: Principal
+  thread?: Xid
+  timestamp?: number // unix timestamp in milliseconds
 }
 
 export interface Conversation {
@@ -64,7 +94,7 @@ export interface Conversation {
   updated_at: number
 }
 
-function messageContent(content: Json | undefined): string {
+function messageContent(content: ContentPart[] | undefined): string {
   if (!content) return ''
   if (typeof content === 'string') return content
 
@@ -72,8 +102,7 @@ function messageContent(content: Json | undefined): string {
     const texts = []
     for (const item of content) {
       if (typeof item === 'string') texts.push(item)
-      else if ((item as any).text && !(item as any).thought)
-        texts.push((item as any).text)
+      else if (item.type == 'Text') texts.push(item.text)
     }
     return texts.join('\n')
   }
@@ -105,29 +134,26 @@ export function toChatMessages(conversation: Conversation): ChatMessage[] {
   return res
 }
 
-function thoughtContent(content: Json | undefined): string {
-  if (!content) return ''
-  if (typeof content === 'string') return content
-
+function thoughtContent(content: ContentPart[] | undefined): string {
   if (Array.isArray(content)) {
-    const texts = []
     for (const item of content) {
-      if (typeof item === 'string') texts.push(item)
-      else if ((item as any).text) texts.push((item as any).text)
+      if (item.type == 'Reasoning') return item.text
+      else if (item.type != 'Text') return JSON.stringify(item)
     }
-    if (texts.length > 0) return texts.join('\n')
   }
 
-  return (content as any).text || JSON.stringify(content)
+  return ''
 }
 
 export function lastThought(conversation: Conversation): ChatMessage | null {
   const message = conversation.messages.at(-1)
-  if (message && (message.name?.startsWith('$') || message.tool_calls)) {
+  if (
+    message &&
+    (message.name?.startsWith('$') ||
+      (Array.isArray(message.content) &&
+        message.content.some((item) => item.type != 'Text')))
+  ) {
     let content = thoughtContent(message.content)
-    if (!content && message.tool_calls) {
-      content = JSON.stringify(message.tool_calls)
-    }
 
     if (content) {
       return {
@@ -389,7 +415,7 @@ export interface EngineCard {
 export type MemoryToolArgs =
   | {
       /** Get a conversation by ID */
-      _type: 'GetResource'
+      type: 'GetResource'
       /** The ID of the resource to get */
       _id: number
       /** The ID of the conversation where the resource is located */
@@ -397,19 +423,19 @@ export type MemoryToolArgs =
     }
   | {
       /** Get a conversation by ID */
-      _type: 'GetConversation'
+      type: 'GetConversation'
       /** The ID of the conversation to get */
       _id: number
     }
   | {
       /** Get a conversation by ID */
-      _type: 'StopConversation'
+      type: 'StopConversation'
       /** The ID of the conversation to stop */
       _id: number
     }
   | {
       /** List previous conversations */
-      _type: 'ListPrevConversations'
+      type: 'ListPrevConversations'
       /** The cursor for pagination */
       cursor?: string
       /** The limit for pagination, default to 10 */
@@ -417,7 +443,7 @@ export type MemoryToolArgs =
     }
   | {
       /** Search conversations */
-      _type: 'SearchConversations'
+      type: 'SearchConversations'
       /** The query string to search */
       query: string
       /** The max number of conversations to return, default to 10 */
@@ -425,7 +451,7 @@ export type MemoryToolArgs =
     }
   | {
       /** List KIP logs */
-      _type: 'ListKipLogs'
+      type: 'ListKipLogs'
       /** The cursor for pagination */
       cursor?: string
       /** The limit for pagination, default to 10 */
