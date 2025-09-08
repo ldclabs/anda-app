@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type DiagnosisModal from '$lib/components/diagnosis/DiagnosisModal.svelte'
+  import type DiagnosticsModal from '$lib/components/diagnostics/DiagnosticsModal.svelte'
   import FadeStaggerSquares from '$lib/components/icons/FadeStaggerSquares.svelte'
   import { assistantStore } from '$lib/stores/assistant.svelte'
   import { t } from '$lib/stores/i18n'
@@ -17,7 +17,9 @@
   // $props() 返回的是“活”的 props 容器，但你对它做了解构成独立变量，这会“截断”后续的变更
   const props = $props<{ conversation: Conversation }>()
   const messages = $derived(toChatMessages(props.conversation))
-  const diagnosisModal = getContext<() => DiagnosisModal>('diagnosisModalState')
+  const diagnosticsModal = getContext<() => DiagnosticsModal>(
+    'diagnosticsModalState'
+  )
 </script>
 
 <div
@@ -57,7 +59,7 @@
         <button
           class="flex items-center rounded-sm p-1 text-base font-normal text-gray-500 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
           onclick={() =>
-            diagnosisModal().openView('conversation', props.conversation._id)}
+            diagnosticsModal().openView('conversation', props.conversation._id)}
           ><InfoCircleOutline size="md" />
         </button>
         <span class="text-xs text-gray-500"

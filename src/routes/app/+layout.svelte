@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state'
-  import DiagnosisModal from '$lib/components/diagnosis/DiagnosisModal.svelte'
+  import DiagnosticsModal from '$lib/components/diagnostics/DiagnosticsModal.svelte'
   import { authStore, signIn, signInByUrl } from '$lib/stores/auth.svelte'
   import { t } from '$lib/stores/i18n'
   import { toastRun } from '$lib/stores/toast.svelte'
@@ -38,7 +38,7 @@
   let activeUrl = $state(page.url.pathname)
   let signInUrl = $state('')
 
-  let diagnosisModalRef = $state<DiagnosisModal>()
+  let diagnosticsModalRef = $state<DiagnosticsModal>()
 
   function onSignInClick() {
     if (authStore.signInFallback) {
@@ -69,7 +69,7 @@
     activeUrl = page.url.pathname
   })
 
-  setContext('diagnosisModalState', () => diagnosisModalRef)
+  setContext('diagnosticsModalState', () => diagnosticsModalRef)
   setContext('signInHandler', onSignInClick)
 </script>
 
@@ -253,7 +253,7 @@
       <div class="relative h-full w-full overflow-auto dark:bg-gray-900">
         {@render children()}
       </div>
-      <DiagnosisModal bind:this={diagnosisModalRef} />
+      <DiagnosticsModal bind:this={diagnosticsModalRef} />
     </main>
   {/if}
 {/key}
