@@ -1,3 +1,4 @@
+use anda_engine::model::request_client_builder;
 use candid::Principal;
 use ciborium::from_reader;
 use ic_agent::Identity;
@@ -5,9 +6,9 @@ use ic_auth_types::{ByteBufB64, SignedDelegationCompact};
 use ic_cose::rand_bytes;
 use ic_cose_types::to_cbor_bytes;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use std::{borrow::Cow, str::FromStr};
+use std::{borrow::Cow, str::FromStr, time::Duration};
 use tauri::{
-    AppHandle, Manager, Runtime, Url,
+    AppHandle, Manager, Runtime, Url, async_runtime,
     plugin::{Builder, TauriPlugin},
 };
 use tauri_plugin_opener::OpenerExt;
@@ -181,12 +182,59 @@ impl<R: Runtime> DeepLinkService<R> {
             next_url: "https://anda.ai/deeplink/",
             action: "SignIn",
             payload: Some(SignInRequest {
-                session_pubkey,
+                session_pubkey: session_pubkey.clone(),
                 max_time_to_live: MAX_TIME_TO_LIVE,
             }),
         };
         let url = request.to_url(&self.sign_in_endpoint);
         self.app.opener().open_url(url.to_string(), None::<&str>)?;
+        let app: AppHandle<R> = self.app.clone();
+        async_runtime::spawn(async move {
+            if let Err(err) = Self::poll_sign_in(app, session_pubkey).await {
+                log::error!("Failed to poll sign in: {err:?}");
+            }
+        });
+        Ok(())
+    }
+
+    async fn poll_sign_in(app: AppHandle<R>, session_pubkey: ByteBufB64) -> Result<()> {
+        let cli = request_client_builder()
+            .build()
+            .map_err(|err| format!("failed to build request client: {err:?}"))?;
+        let url = format!(
+            "https://asxpf-ciaaa-aaaap-an33a-cai.icp0.io/delegation?pubkey={}",
+            session_pubkey
+        );
+
+        let mut counter = 0;
+        while counter < 60 {
+            counter += 1;
+            tokio::time::sleep(Duration::from_secs(1)).await;
+
+            if app.icp().identity().is_authenticated() {
+                return Ok(());
+            }
+
+            let resp = cli
+                .get(&url)
+                .header("Accept", "application/cbor")
+                .send()
+                .await
+                .map_err(|err| format!("failed to send request: {err:?}"))?;
+
+            if resp.status().is_success() {
+                let body = resp
+                    .bytes()
+                    .await
+                    .map_err(|err| format!("failed to read response body: {err:?}"))?;
+                let data: DelegationStoreResponse = from_reader(body.as_ref())
+                    .map_err(|err| format!("failed to parse response body: {err:?}"))?;
+                let data: SignInResponse = from_reader(data.result.as_slice())
+                    .map_err(|err| format!("failed to parse delegation data: {err:?}"))?;
+                app.deep_link_service().on_sign_in(data)?;
+                return Ok(());
+            }
+        }
         Ok(())
     }
 
@@ -197,12 +245,13 @@ impl<R: Runtime> DeepLinkService<R> {
             match DeepLinkResponse::from_url(url) {
                 Ok(res) => match res.action.as_str() {
                     "SignIn" => {
-                        if let Err(err) = self.on_sign_in(res) {
-                            log::error!(
+                        if let Ok(res) = res.get_payload()
+                            && let Err(err) = self.on_sign_in(res) {
+                                log::error!(
                                     action = "SignIn",
                                     error = format!("{err:?}");
                                     "failed to sign in with deep link");
-                        }
+                            }
                     }
                     _ => {
                         log::warn!(
@@ -221,26 +270,34 @@ impl<R: Runtime> DeepLinkService<R> {
         }
     }
 
-    pub fn on_sign_in(&self, res: DeepLinkResponse) -> Result<Principal> {
-        let res: SignInResponse = res.get_payload()?;
+    pub fn on_sign_in(&self, res: SignInResponse) -> Result<Principal> {
+        // let res: SignInResponse = res.get_payload()?;
         let auth = InternetIdentityAuth::from(res);
         let secret_state = self.app.state::<SecretStateCell>();
-        let principal = secret_state.with_mut(|state| {
+        let (principal, changed) = secret_state.with_mut(|state| {
+            if state.auth.as_ref() == Some(&auth) {
+                let principal = state.auth.as_ref().unwrap().principal();
+                return Ok::<_, Box<dyn std::error::Error>>((principal, false));
+            }
+
             let id = auth.to_identity(**state.session_secret)?;
             let principal = id.sender().unwrap();
             self.app.icp().set_identity(Box::new(id));
 
             state.auth = Some(auth);
-            Ok::<_, Box<dyn std::error::Error>>(principal)
+            Ok::<_, Box<dyn std::error::Error>>((principal, true))
         })?;
-        secret_state.save()?;
-        self.app.propose_reconnect_assistant();
-        self.app.try_reconnect_assistant();
-        log::info!(
+
+        if changed {
+            secret_state.save()?;
+            self.app.propose_reconnect_assistant();
+            self.app.try_reconnect_assistant();
+            log::info!(
             service = "DeepLink",
             action = "SignIn",
             principal = principal.to_text();
             "success");
+        }
 
         Ok(principal)
     }
@@ -263,4 +320,9 @@ impl<R: Runtime, T: Manager<R>> DeepLinkServiceExt<R> for T {
             sign_in_endpoint: dls.sign_in_endpoint.clone(),
         }
     }
+}
+
+#[derive(Deserialize, Serialize)]
+struct DelegationStoreResponse {
+    pub result: ByteBufB64,
 }

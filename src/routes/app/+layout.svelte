@@ -67,6 +67,9 @@
 
   $effect(() => {
     activeUrl = page.url.pathname
+    if (signInModal && authStore.user) {
+      signInModal = false
+    }
   })
 
   setContext('diagnosticsModalState', () => diagnosticsModalRef)

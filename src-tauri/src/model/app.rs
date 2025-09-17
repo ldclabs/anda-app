@@ -57,7 +57,7 @@ impl SecretState {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub struct InternetIdentityAuth {
     pub user_pubkey: ByteBufB64,
     pub delegations: Vec<SignedDelegationCompact>,
