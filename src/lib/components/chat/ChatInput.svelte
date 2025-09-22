@@ -10,19 +10,17 @@
   import { readFile } from '@tauri-apps/plugin-fs'
   import { error } from '@tauri-apps/plugin-log'
   import { Button, Spinner } from 'flowbite-svelte'
-  import {
-    CirclePlusOutline,
-    CloseOutline,
-    FileImageOutline,
-    FileLinesOutline,
-    FileMusicOutline,
-    FileOutline,
-    FileVideoOutline,
-    StopSolid
-  } from 'flowbite-svelte-icons'
   import mime from 'mime'
   import { onDestroy } from 'svelte'
   import MIMEType from 'whatwg-mimetype'
+  import AddCircleLine from '../icons/AddCircleLine.svelte'
+  import CloseLine from '../icons/CloseLine.svelte'
+  import File3Line from '../icons/File3Line.svelte'
+  import FileTextLine from '../icons/FileTextLine.svelte'
+  import ImageAiLine from '../icons/ImageAILine.svelte'
+  import MvAiLine from '../icons/MvAILine.svelte'
+  import StopFill from '../icons/StopFill.svelte'
+  import VideoAiLine from '../icons/VideoAILine.svelte'
 
   const ot = osType()
   const shortcutLabel = ot === 'macos' ? '⌘ ⏎' : 'Ctrl ⏎'
@@ -159,15 +157,15 @@
 
   function fileIcon(mime_type: string) {
     if (mime_type.startsWith('text/')) {
-      return FileLinesOutline
+      return FileTextLine
     } else if (mime_type.startsWith('image/')) {
-      return FileImageOutline
+      return ImageAiLine
     } else if (mime_type.startsWith('video/')) {
-      return FileVideoOutline
+      return VideoAiLine
     } else if (mime_type.startsWith('audio/')) {
-      return FileMusicOutline
+      return MvAiLine
     }
-    return FileOutline
+    return File3Line
   }
 
   function handlePaste(event: ClipboardEvent) {
@@ -272,8 +270,10 @@
   {@const Icon = fileIcon(file.mime_type!)}
   <div class="grid grid-cols-[1fr_auto] p-1">
     <div class="flex min-w-0 flex-row items-center gap-2">
-      <span class="grid place-items-center text-gray-600 dark:text-gray-300">
-        <Icon size="md" />
+      <span
+        class="grid place-items-center text-gray-600 *:size-5 dark:text-gray-300"
+      >
+        <Icon />
       </span>
 
       <span>{file.mime_type}</span>
@@ -286,7 +286,7 @@
       size="xs"
       class="shadow-0 rounded-full border-0 p-1"
     >
-      <CloseOutline size="lg" />
+      <span class="*:size-5"><CloseLine /></span>
     </Button>
   </div>
 {/snippet}
@@ -332,7 +332,7 @@
       color="alternative"
       class="shadow-0 rounded-full border-2 p-1 disabled:text-gray-500/50"
     >
-      <CirclePlusOutline size="lg" />
+      <span class="*:size-6"><AddCircleLine /></span>
     </Button>
     <Button
       onclick={handleSend}
@@ -342,7 +342,7 @@
       {#if isRunning}
         <div class="relative -m-1 grid size-8 place-items-center">
           <Spinner class="absolute inset-0 size-8 text-gray-500/50" />
-          <StopSolid size="md" class="z-10" />
+          <span class="z-10 *:size-5"><StopFill /></span>
         </div>
       {:else}
         <span class="px-2">{t('assistant.run')} <b>{shortcutLabel}</b></span>

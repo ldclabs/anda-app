@@ -1,6 +1,5 @@
 <script lang="ts">
   import type DiagnosticsModal from '$lib/components/diagnostics/DiagnosticsModal.svelte'
-  import FadeStaggerSquares from '$lib/components/icons/FadeStaggerSquares.svelte'
   import { assistantStore } from '$lib/stores/assistant.svelte'
   import { t } from '$lib/stores/i18n'
   import {
@@ -9,8 +8,10 @@
     type Conversation
   } from '$lib/types/assistant'
   import { Hr } from 'flowbite-svelte'
-  import { InfoCircleOutline, UserHeadsetOutline } from 'flowbite-svelte-icons'
   import { getContext } from 'svelte'
+  import FadeStaggerSquares from '../icons/FadeStaggerSquares.svelte'
+  import Information2Line from '../icons/Information2Line.svelte'
+  import Robot2Line from '../icons/Robot2Line.svelte'
   import ChatMessage from './ChatMessage.svelte'
 
   // const { conversation }: { conversation: Conversation } = $props() ❌
@@ -39,7 +40,7 @@
       <div class="flex w-full flex-col gap-1">
         <div class="w-full px-4 py-2 dark:text-white">
           <div class="flex flex-row items-center gap-2">
-            <UserHeadsetOutline size="lg" class="animate-pulse" />
+            <span class="animate-pulse *:size-5"><Robot2Line /></span>
             <span class="text-sm">{t('assistant.thinking')}</span>
             <span class="*:w-12"><FadeStaggerSquares /></span>
           </div>
@@ -60,7 +61,7 @@
           class="flex items-center rounded-sm p-1 text-base font-normal text-gray-500 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
           onclick={() =>
             diagnosticsModal().openView('conversation', props.conversation._id)}
-          ><InfoCircleOutline size="md" />
+          ><span class="*:size-5"><Information2Line /></span>
         </button>
         <span class="text-xs text-gray-500"
           >{Math.floor(

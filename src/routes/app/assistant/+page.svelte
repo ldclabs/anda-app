@@ -1,6 +1,9 @@
 <script lang="ts">
   import ChatConversation from '$lib/components/chat/ChatConversation.svelte'
   import ChatInput from '$lib/components/chat/ChatInput.svelte'
+  import AccountCircleLine from '$lib/components/icons/AccountCircleLine.svelte'
+  import Robot2Line from '$lib/components/icons/Robot2Line.svelte'
+  import Settings5Line from '$lib/components/icons/Settings5Line.svelte'
   import { assistantStore, assistant_name } from '$lib/stores/assistant.svelte'
   import { authStore } from '$lib/stores/auth.svelte'
   import { t } from '$lib/stores/i18n'
@@ -9,11 +12,6 @@
   import { renderMarkdown } from '$lib/utils/markdown'
   import { scrollIntoView, scrollOnHooks } from '$lib/utils/window'
   import { Spinner } from 'flowbite-svelte'
-  import {
-    CogOutline,
-    UserCircleOutline,
-    UserHeadsetOutline
-  } from 'flowbite-svelte-icons'
   import { getContext, onMount, tick } from 'svelte'
 
   let messagesContainer = $state<HTMLElement>()
@@ -73,7 +71,9 @@
     {#if conversations.length === 0}
       <div class="flex h-full w-full items-center justify-center">
         <div class="max-w-md">
-          <UserHeadsetOutline size="xl" class="text-primary-500 mx-auto mb-4" />
+          <div class="text-primary-500 mb-4 *:m-auto *:size-10"
+            ><Robot2Line /></div
+          >
           <h2
             class="mb-2 text-center text-xl font-semibold text-gray-900 dark:text-white"
           >
@@ -117,7 +117,7 @@
           <button
             class="text-primary-600 flex items-center rounded-sm p-2 text-base font-normal hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
             onclick={() => open_settings_window()}
-            ><CogOutline size="lg" />
+            ><span class="*:size-5"><Settings5Line /></span>
             <span class="ms-2">{t('settings.title')}</span>
           </button>
         </div>
@@ -132,7 +132,7 @@
             class="text-primary-600 flex items-center rounded-sm p-2 text-base font-normal hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 dark:text-white dark:hover:bg-gray-700"
             onclick={onSignInClick}
             disabled={authStore.isSigningIn}
-            ><UserCircleOutline size="lg" />
+            ><span class="*:size-5"><AccountCircleLine /></span>
             <span class="ms-2">{t('app.sign_in')}</span>
             {#if authStore.isSigningIn}
               <Spinner class="ms-2 inline-flex" size="4" />

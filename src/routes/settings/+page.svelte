@@ -1,5 +1,10 @@
 <script lang="ts">
   import { page } from '$app/state'
+  import AiGenerate2 from '$lib/components/icons/AIGenerate2.svelte'
+  import EyeLine from '$lib/components/icons/EyeLine.svelte'
+  import EyeOffLine from '$lib/components/icons/EyeOffLine.svelte'
+  import RouterLine from '$lib/components/icons/RouterLine.svelte'
+  import Settings5Line from '$lib/components/icons/Settings5Line.svelte'
   import { t } from '$lib/stores/i18n'
   import {
     get_secret_setting,
@@ -12,13 +17,6 @@
   } from '$lib/stores/settings.svelte'
   import { toastRun, triggerToast } from '$lib/stores/toast.svelte'
   import { Input, Select } from 'flowbite-svelte'
-  import {
-    CogOutline,
-    EyeOutline,
-    EyeSlashOutline,
-    GlobeOutline,
-    WandMagicSparklesOutline
-  } from 'flowbite-svelte-icons'
   import { onMount, tick } from 'svelte'
 
   // 基础状态
@@ -27,10 +25,10 @@
 
   // 计算属性
   const navigationItems = $derived([
-    { id: 'general', name: t('settings.nav.general'), icon: CogOutline },
-    { id: 'appearance', name: t('settings.nav.appearance'), icon: EyeOutline },
-    { id: 'network', name: t('settings.nav.network'), icon: GlobeOutline },
-    { id: 'ai', name: t('settings.nav.ai'), icon: WandMagicSparklesOutline }
+    { id: 'general', name: t('settings.nav.general'), icon: Settings5Line },
+    { id: 'appearance', name: t('settings.nav.appearance'), icon: EyeLine },
+    { id: 'network', name: t('settings.nav.network'), icon: RouterLine },
+    { id: 'ai', name: t('settings.nav.ai'), icon: AiGenerate2 }
   ])
 
   const themeOptions = $derived([
@@ -201,7 +199,7 @@
       <h1
         class="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white"
       >
-        <CogOutline class="h-5 w-5" />
+        <span class="*:size-5"><Settings5Line /></span>
         {t('settings.title')}
       </h1>
     </div>
@@ -219,7 +217,7 @@
                 : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}"
               onclick={() => (activeSection = item.id)}
             >
-              <Icon class="h-4 w-4" />
+              <span><Icon /></span>
               {item.name}
             </button>
           </li>
@@ -445,9 +443,9 @@
                       class="pointer-events-auto"
                     >
                       {#if showAiApiKey}
-                        <EyeOutline class="h-6 w-6" />
+                        <span class="*:size-5"><EyeLine /></span>
                       {:else}
-                        <EyeSlashOutline class="h-6 w-6" />
+                        <span class="*:size-5"><EyeOffLine /></span>
                       {/if}
                     </button>
                   {/snippet}

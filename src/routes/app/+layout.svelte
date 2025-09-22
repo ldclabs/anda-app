@@ -1,6 +1,11 @@
 <script lang="ts">
   import { page } from '$app/state'
   import DiagnosticsModal from '$lib/components/diagnostics/DiagnosticsModal.svelte'
+  import AccountCircleLine from '$lib/components/icons/AccountCircleLine.svelte'
+  import DownloadCloud2Line from '$lib/components/icons/DownloadCloud2Line.svelte'
+  import QuestionLine from '$lib/components/icons/QuestionLine.svelte'
+  import RefreshLine from '$lib/components/icons/RefreshLine.svelte'
+  import Robot2Line from '$lib/components/icons/Robot2Line.svelte'
   import { authStore, signIn, signInByUrl } from '$lib/stores/auth.svelte'
   import { t } from '$lib/stores/i18n'
   import { toastRun } from '$lib/stores/toast.svelte'
@@ -19,13 +24,6 @@
     SidebarItem,
     Spinner
   } from 'flowbite-svelte'
-  import {
-    BellRingOutline,
-    QuestionCircleOutline,
-    RefreshOutline,
-    UserCircleOutline,
-    UserHeadsetOutline
-  } from 'flowbite-svelte-icons'
   import { setContext } from 'svelte'
 
   // Safe OS type detection
@@ -119,7 +117,7 @@
         activeClass="font-bold text-green-500 hover:text-green-900 dark:hover:text-green-700 dark:text-green-300"
       >
         <BottomNavItem btnName={t('assistant.title')} href="/app/assistant">
-          <UserHeadsetOutline size="lg" />
+          <span class="*:size-6"><Robot2Line /></span>
         </BottomNavItem>
         <!-- <BottomNavItem btnName="Discover" href="/app/discover">
           <SearchOutline size="lg" />
@@ -136,15 +134,15 @@
                 class="size-6 rounded-full"
               />
             {:else}
-              <UserCircleOutline size="xl" />
+              <span class="*:size-6"><AccountCircleLine /></span>
             {/if}
           </BottomNavItem>
         {:else}
           <BottomNavItem btnName={t('app.sign_in')} onclick={onSignIn}>
-            <UserCircleOutline
-              size="xl"
-              class={authStore.isSigningIn ? 'animate-bounce' : ''}
-            />
+            <span
+              class="*:size-6 {authStore.isSigningIn ? 'animate-bounce' : ''}"
+              ><AccountCircleLine /></span
+            >
           </BottomNavItem>
         {/if}
       </BottomNav>
@@ -165,7 +163,7 @@
         <SidebarGroup>
           <SidebarItem label={t('assistant.title')} href="/app/assistant">
             {#snippet icon()}
-              <UserHeadsetOutline size="lg" />
+              <span class="*:size-6"><Robot2Line /></span>
             {/snippet}
           </SidebarItem>
           <!-- <SidebarItem label="Discover" href="/app/discover">
@@ -200,12 +198,12 @@
                 class="flex w-full items-center rounded-sm p-2 text-base font-normal text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed dark:text-white dark:hover:bg-gray-700"
                 onclick={onSignInClick}
                 disabled={authStore.isSigningIn}
-                ><UserCircleOutline size="xl" />
+                ><span class="*:size-6"><AccountCircleLine /></span>
                 <span class="ms-3">{t('app.sign_in')}</span>
                 {#if authStore.isSigningIn}
                   <Spinner class="ms-3 inline-flex" size="4" />
                 {:else if authStore.signInFallback}
-                  <QuestionCircleOutline size="md" class="ms-1" />
+                  <span class="ms-1 *:size-5"><QuestionLine /></span>
                 {/if}
               </button>
             </li>
@@ -216,10 +214,9 @@
                 class="flex w-full items-center rounded-sm p-2 text-base font-normal hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                 onclick={() => open_update_window()}
               >
-                <BellRingOutline
-                  class="text-primary-500 inline-flex"
-                  size="md"
-                />
+                <span class="text-primary-500 *:size-5"
+                  ><DownloadCloud2Line /></span
+                >
                 <span class="ms-3">
                   {t('app.new_version', {
                     version: updaterStore.info?.version || 'v1.0.0'
@@ -245,7 +242,7 @@
                     })}
                   </span>
                 {:else}
-                  <RefreshOutline size="lg" class="text-primary-500" />
+                  <span class="text-primary-500 *:size-6"><RefreshLine /></span>
                   <span class="ms-3">{t('app.update_restart')}</span>
                 {/if}
               </button>

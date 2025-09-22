@@ -1,4 +1,7 @@
 <script lang="ts">
+  import CheckLine from '$lib/components/icons/CheckLine.svelte'
+  import FileCopyLine from '$lib/components/icons/FileCopyLine.svelte'
+  import LogoutCircleRLine from '$lib/components/icons/LogoutCircleRLine.svelte'
   import AndaPlaceholder from '$lib/components/ui/AndaPlaceholder.svelte'
   import { authStore, get_user, logout } from '$lib/stores/auth.svelte'
   import { t } from '$lib/stores/i18n'
@@ -6,11 +9,6 @@
   import { shortId } from '$lib/utils/helper'
   import { renderMarkdown } from '$lib/utils/markdown'
   import { Avatar, Button, Clipboard, Heading, Spinner } from 'flowbite-svelte'
-  import {
-    ArrowRightToBracketOutline,
-    CheckOutline,
-    FileCopyOutline
-  } from 'flowbite-svelte-icons'
   import { onMount } from 'svelte'
 
   const userInfo = $derived(authStore.user)
@@ -80,9 +78,11 @@
               bind:value={userInfo.id}
             >
               {#snippet children(success)}
-                {#if success}<CheckOutline
-                    color="primary"
-                  />{:else}<FileCopyOutline />{/if}
+                {#if success}
+                  <span class="text-primary-500 *:size-5"><CheckLine /></span>
+                {:else}
+                  <span class="text-gray-500 *:size-5"><FileCopyLine /></span>
+                {/if}
               {/snippet}
             </Clipboard>
           </div>
@@ -90,12 +90,12 @@
 
         <Button
           color="secondary"
-          class="w-full"
+          class="w-full gap-2"
           disabled={isLoggingOut}
           onclick={handleLogout}
         >
-          <ArrowRightToBracketOutline class="mr-2" />
           {t('app.log_out')}
+          <span><LogoutCircleRLine /></span>
         </Button>
       </div>
     {:else}

@@ -1,13 +1,11 @@
 <script lang="ts">
+  import CheckLine from '$lib/components/icons/CheckLine.svelte'
+  import ErrorWarningLine from '$lib/components/icons/ErrorWarningLine.svelte'
+  import Information2Line from '$lib/components/icons/Information2Line.svelte'
   import '$lib/init'
   import { settingsStore } from '$lib/stores/settings.svelte'
   import { toastStore } from '$lib/stores/toast.svelte'
   import { Toast } from 'flowbite-svelte'
-  import {
-    CheckCircleSolid,
-    ExclamationCircleSolid,
-    InfoCircleSolid
-  } from 'flowbite-svelte-icons'
   import '../app.css'
 
   let { children } = $props()
@@ -71,11 +69,11 @@
         {#if toast.icon}
           {@render toast.icon()}
         {:else if toast.type === 'success'}
-          <CheckCircleSolid class="size-5" />
+          <span class="*:size-5"><CheckLine /></span>
         {:else if toast.type === 'error'}
-          <ExclamationCircleSolid class="size-5" />
+          <span class="*:size-5"><ErrorWarningLine /></span>
         {:else}
-          <InfoCircleSolid class="size-5" />
+          <span class="*:size-5"><Information2Line /></span>
         {/if}
       {/snippet}
       {#if toast.content}

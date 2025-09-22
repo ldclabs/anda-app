@@ -1,14 +1,12 @@
 <script lang="ts">
+  import ExternalLinkLine from '$lib/components/icons/ExternalLinkLine.svelte'
+  import RefreshLine from '$lib/components/icons/RefreshLine.svelte'
   import { t } from '$lib/stores/i18n'
   import { updaterStore } from '$lib/stores/updater.svelte'
   import { renderMarkdown } from '$lib/utils/markdown'
   import { osType } from '$lib/utils/tauri.mock'
   import { openUrl } from '@tauri-apps/plugin-opener'
   import { Button, Spinner } from 'flowbite-svelte'
-  import {
-    ArrowUpRightFromSquareOutline,
-    RefreshOutline
-  } from 'flowbite-svelte-icons'
   import { onMount, tick } from 'svelte'
 
   const ot = osType()
@@ -41,7 +39,6 @@
   class="mx-auto min-h-screen max-w-2xl p-6 dark:bg-gray-800 dark:text-gray-200"
 >
   <h1 class="mb-6 text-2xl font-bold">{t('app.check_update')}</h1>
-
   {#if updaterStore.info}
     <div
       class="mb-6 space-y-2 rounded-lg border border-gray-200 p-4 dark:border-gray-700"
@@ -64,9 +61,8 @@
             }}
           >
             {t('app.new_version', { version: updaterStore.info.version })}
-            <span class="ml-2">Github</span><ArrowUpRightFromSquareOutline
-              size="md"
-            />
+            <span class="ml-2">Github</span>
+            <span class="*:size-5"><ExternalLinkLine /></span>
           </a>
         </div>
       </div>
@@ -83,13 +79,12 @@
         <Button
           color="green"
           size="md"
+          class="flex flex-row items-center gap-2"
           onclick={() =>
             openUrl('https://github.com/ldclabs/anda-app/releases')}
         >
-          <span class="inline-flex items-center">
-            <ArrowUpRightFromSquareOutline class="me-2" size="lg" />
-            {t('app.go_to_download')}
-          </span>
+          <span class="">{t('app.go_to_download')}</span>
+          <span class="*:size-5"><ExternalLinkLine /></span>
         </Button>
       </div>
     {:else if updaterStore.isDownloading}
@@ -109,16 +104,17 @@
         <Button
           color="green"
           size="md"
+          class="flex flex-row items-center gap-2"
           onclick={() => updaterStore.restartApp()}
           disabled={updaterStore.isRestarting}
         >
-          <span class="inline-flex items-center">
-            <RefreshOutline class="me-2" size="lg" />
+          <span class="*:size-5"><RefreshLine /></span>
+          <span>
             {t('app.update_restart')}
-            {#if updaterStore.isRestarting}
-              <Spinner class="ms-3 inline-flex" size="4" />
-            {/if}
           </span>
+          {#if updaterStore.isRestarting}
+            <Spinner size="4" />
+          {/if}
         </Button>
       </div>
     {/if}

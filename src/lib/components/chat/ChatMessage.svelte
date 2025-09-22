@@ -4,12 +4,10 @@
   import { formatDateTime } from '$lib/utils/helper'
   import { getPlainText, renderMarkdown } from '$lib/utils/markdown'
   import { Clipboard } from 'flowbite-svelte'
-  import {
-    CheckOutline,
-    FileCloneOutline,
-    FileCopyAltOutline
-  } from 'flowbite-svelte-icons'
   import { onMount } from 'svelte'
+  import CheckLine from '../icons/CheckLine.svelte'
+  import FileCopy2Line from '../icons/FileCopy2Line.svelte'
+  import FileCopyLine from '../icons/FileCopyLine.svelte'
 
   let { message }: { message: ChatMessage } = $props()
   const [content, hook] = renderMarkdown(message.content)
@@ -48,9 +46,9 @@
         onclick={() => (text = getPlainText(message.content))}
         size="sm"
         color="alternative"
-        class="px-2 py-1 focus-within:ring-0 focus:ring-0"
+        class="px-2 py-1 *:size-5 focus-within:ring-0 focus:ring-0"
       >
-        {#if textSuccess}<CheckOutline />{:else}<FileCopyAltOutline />{/if}{t(
+        {#if textSuccess}<CheckLine />{:else}<FileCopy2Line />{/if}{t(
           'app.copy_text'
         )}
       </Clipboard>
@@ -59,9 +57,9 @@
         bind:success={mdSuccess}
         size="sm"
         color="alternative"
-        class="px-2 py-1 focus-within:ring-0 focus:ring-0"
+        class="px-2 py-1 *:size-5 focus-within:ring-0 focus:ring-0"
       >
-        {#if mdSuccess}<CheckOutline />{:else}<FileCloneOutline />{/if}{t(
+        {#if mdSuccess}<CheckLine />{:else}<FileCopyLine />{/if}{t(
           'app.copy_origin'
         )}
       </Clipboard>
