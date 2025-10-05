@@ -2,6 +2,7 @@
   import { page } from '$app/state'
   import DiagnosticsModal from '$lib/components/diagnostics/DiagnosticsModal.svelte'
   import AccountCircleLine from '$lib/components/icons/AccountCircleLine.svelte'
+  import DiscussLine from '$lib/components/icons/DiscussLine.svelte'
   import DownloadCloud2Line from '$lib/components/icons/DownloadCloud2Line.svelte'
   import QuestionLine from '$lib/components/icons/QuestionLine.svelte'
   import RefreshLine from '$lib/components/icons/RefreshLine.svelte'
@@ -119,12 +120,13 @@
         <BottomNavItem btnName={t('assistant.title')} href="/app/assistant">
           <span class="*:size-6"><Robot2Line /></span>
         </BottomNavItem>
+        <BottomNavItem btnName={t('threads.title')} href="/app/threads">
+          <span class="*:size-6"><DiscussLine /></span>
+        </BottomNavItem>
         <!-- <BottomNavItem btnName="Discover" href="/app/discover">
           <SearchOutline size="lg" />
         </BottomNavItem> -->
-        <!-- <BottomNavItem btnName="Messages" href="/app/messages">
-          <MessagesOutline size="lg" />
-        </BottomNavItem> -->
+
         {#if authStore.user}
           <BottomNavItem btnName={authStore.user.name} href="#">
             {#if authStore.user.image}
@@ -166,14 +168,9 @@
               <span class="*:size-6"><Robot2Line /></span>
             {/snippet}
           </SidebarItem>
-          <!-- <SidebarItem label="Discover" href="/app/discover">
+          <!-- <SidebarItem label={t('threads.title')} href="/app/threads">
             {#snippet icon()}
-              <SearchOutline size="lg" />
-            {/snippet}
-          </SidebarItem> -->
-          <!-- <SidebarItem label="Messages" href="/app/messages">
-            {#snippet icon()}
-              <MessagesOutline size="lg" />
+              <span class="*:size-6"><DiscussLine /></span>
             {/snippet}
           </SidebarItem> -->
         </SidebarGroup>

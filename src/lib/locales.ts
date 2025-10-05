@@ -291,5 +291,10 @@ export const translations: Record<string, Record<string, string>> = {
   'assistant.file_size_too_large': {
     en: 'File size exceeds 2MB limit',
     zh: '文件大小超过 2MB 限制'
+  },
+
+  'threads.title': {
+    en: 'Threads',
+    zh: '主题讨论'
   }
 }

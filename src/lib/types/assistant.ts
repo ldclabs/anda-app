@@ -60,8 +60,12 @@ export interface Message {
 
   name?: string
   user?: Principal
-  thread?: Xid
   timestamp?: number // unix timestamp in milliseconds
+
+  // thread message fields
+  _id?: number
+  resources?: Resource[]
+  reply_to?: number
 }
 
 export interface Conversation {
